@@ -1,0 +1,11 @@
+{
+  "admins": {
+    "hayden@unsw.edu.au": {
+      "name": "Hayden Smith",
+      "password": "adummypassword",
+      "sessionActive": false
+    }
+  },
+  "games": {},
+  "sessions": {}
+}
