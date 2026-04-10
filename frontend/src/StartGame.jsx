@@ -1,35 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import EndGameModal from './Component/EndGameModal';
+import { useSessionStatus } from './hooks/useSessionStatus';
 
 function SessionButton({ gameId, active, onRefresh }) {
   const sessionId = active || null;
   const [copied, setCopied] = useState(false);
-  const [position, setPosition] = useState(null);
-  const [totalQuestions, setTotalQuestions] = useState(null);
   const [showEndModal, setShowEndModal] = useState(false);
   const navigate = useNavigate();
-
-  const checkStatus = async (id) => {
-    try {
-      const response = await axios.get(`http://localhost:5005/admin/session/${id}/status`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      setPosition(response.data.results.position);
-      setTotalQuestions(response.data.results.questions.length);
-    } catch (_) {
-      // session ended or unavailable
-    }
-  };
-
-  useEffect(() => {
-    if (!sessionId) return;
-    checkStatus(sessionId);
-    const interval = setInterval(() => checkStatus(sessionId), 2000);
-    return () => clearInterval(interval);
-  }, [sessionId]);
+  const { position, totalQuestions, checkStatus } = useSessionStatus(sessionId);
 
   const mutation = async (type, onSuccess) => {
     try {

@@ -17,6 +17,7 @@ import EditQuestion from './EditQuestion';
 import JoinGame from './JoinGame';
 import PlayGame from './PlayGame';
 import PlayerResult from './PlayerResult';
+import NavBar from './Component/NavBar';
 
 function Pages() {
   const [token, setToken] = useState(null);
@@ -46,27 +47,11 @@ function Pages() {
     navigate('/login');
   };
 
-  // Dashboard has its own navbar, don't show floating buttons there
   const showFloatingNav = token && location.pathname !== '/dashboard';
 
   return (
     <>
-      {showFloatingNav && (
-        <div className="fixed top-4 right-4 z-50 flex gap-2">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 text-sm transition"
-          >
-            ← Dashboard
-          </button>
-          <button
-            onClick={logout}
-            className="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 text-sm transition"
-          >
-            Logout
-          </button>
-        </div>
-      )}
+      {showFloatingNav && <NavBar variant="floating" onLogout={logout} />}
       <Routes>
         <Route path="/" element={<Navigate to={token ? "/dashboard" : "/login"} />} />
         <Route path="/register" element={<Register successJob={successJob} token={token} />} />

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useGames } from './hooks/useGames';
 import './index.css';
 
 function EditQuestion() {
   const { gameId, questionId } = useParams();
   const navigate = useNavigate();
+  const { getStoredGames, updateGame } = useGames();
   const [game, setGame] = useState(null);
   const [questionText, setQuestionText] = useState('');
   const [duration, setDuration] = useState(10);
@@ -12,11 +14,10 @@ function EditQuestion() {
   const [questionType, setQuestionType] = useState('single');
   const [idx, setIdx] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState([]);
+
   useEffect(() => {
-    const stored = localStorage.getItem('games');
-    if (!stored) return navigate('/');
-    const games = JSON.parse(stored);
-    const foundGame = games.find(g => g.id === parseInt(gameId, 10));
+    const stored = getStoredGames();
+    const foundGame = Object.values(stored).find(g => g.id === parseInt(gameId, 10));
     if (!foundGame) return navigate('/');
     setGame(foundGame);
     const q = foundGame.questions.find(q => q.id === parseInt(questionId, 10));
@@ -26,33 +27,14 @@ function EditQuestion() {
     const type = q.questionType || (q.correctAnswers.length > 1 ? 'multiple' : 'single');
     setQuestionType(type);
     if (type === 'multiple') {
-      const idxs = q.correctAnswers.map(ans => q.answers.indexOf(ans)).filter(i => i >= 0);
-      setCorrectAnswers(idxs);
+      setCorrectAnswers(q.correctAnswers.map(ans => q.answers.indexOf(ans)).filter(i => i >= 0));
     } else if (type === 'judgement') {
       setIdx(q.correctAnswers[0] === 'True' ? 0 : 1);
     } else {
       setIdx(q.answers.indexOf(q.correctAnswers[0]));
     }
   }, [gameId, questionId, navigate]);
-  const putGames = async (gamesObject) => {
-    try {
-      const token = localStorage.getItem('token');
-      const payload = JSON.stringify({ games: gamesObject });
-      const res = await fetch('http://localhost:5005/admin/games', {
-        method: 'PUT',
-        headers: {
-          Accept: '*/*',
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: payload,
-      });
-      const data = await res.json();
-      if (!res.ok) alert(data.error);
-    } catch (e) {
-      alert(e.message);
-    }
-  };
+
   const saveQuestion = async () => {
     const formattedCorrect =
       questionType === 'multiple'
@@ -75,12 +57,7 @@ function EditQuestion() {
       ),
     };
     setGame(updatedGame);
-    const allGames = JSON.parse(localStorage.getItem('games'));
-    const updatedAll = allGames.map(g =>
-      g.id === updatedGame.id ? updatedGame : g
-    );
-    localStorage.setItem('games', JSON.stringify(updatedAll));
-    await putGames(updatedAll);
+    await updateGame(updatedGame);
     navigate(`/game/${gameId}`);
   };
   if (!game) return <div className="p-6">Loading…</div>;

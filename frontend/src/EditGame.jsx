@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useGames } from './hooks/useGames';
 import './index.css';
 
 function EditGame() {
   const { gameId } = useParams();
   const navigate = useNavigate();
+  const { getStoredGames, updateGame } = useGames();
   const [game, setGame] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [questionText, setQuestionText] = useState('');
@@ -15,33 +17,11 @@ function EditGame() {
   const [correctAnswers, setCorrectAnswers] = useState([]);
 
   useEffect(() => {
-    const games = localStorage.getItem('games');
-    if (!games) return navigate('/');
-    const data = JSON.parse(games);
-    const editable = data.find(g => g.id === parseInt(gameId, 10));
+    const stored = getStoredGames();
+    const editable = Object.values(stored).find(g => g.id === parseInt(gameId, 10));
     if (!editable) return navigate('/');
     setGame(editable);
   }, [gameId, navigate]);
-
-  if (!game) return <div className="p-6">Loading…</div>;
-  const putGames = async (gamesObject) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5005/admin/games', {
-        method: 'PUT',
-        headers: {
-          'Accept': '*/*',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ games: gamesObject }),
-      });
-      const data = await response.json();
-      if (!response.ok) alert(data.error);
-    } catch (e) {
-      alert(e.message);
-    }
-  };
 
   const resetForm = () => {
     setQuestionText('');
@@ -79,26 +59,15 @@ function EditGame() {
       questions: [...game.questions, question],
     };
     setGame(updatedGame);
-    const allGames = JSON.parse(localStorage.getItem('games'));
-    const updatedAll = allGames.map(g =>
-      g.id === updatedGame.id ? updatedGame : g
-    );
-    localStorage.setItem('games', JSON.stringify(updatedAll));
-    await putGames(updatedAll);
+    await updateGame(updatedGame);
     setShowAdd(false);
     resetForm();
   };
 
   const deleteQuestion = async (index) => {
-    const updatedQuestions = game.questions.filter((_, i) => i !== index);
-    const updatedGame = { ...game, questions: updatedQuestions };
+    const updatedGame = { ...game, questions: game.questions.filter((_, i) => i !== index) };
     setGame(updatedGame);
-    const allGames = JSON.parse(localStorage.getItem('games'));
-    const updatedAll = allGames.map(g =>
-      g.id === updatedGame.id ? updatedGame : g
-    );
-    localStorage.setItem('games', JSON.stringify(updatedAll));
-    await putGames(updatedAll);
+    await updateGame(updatedGame);
   };
 
   return (
