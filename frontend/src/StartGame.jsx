@@ -2,158 +2,140 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { CopyToClipboard } from 'react-copy-to-clipboard';
+import EndGameModal from './Component/EndGameModal';
 
-// Session button component
 function SessionButton({ gameId, active, onRefresh }) {
   const sessionId = active || null;
-  const [sessionActive, setSessionActive] = useState(false);
   const [copied, setCopied] = useState(false);
-  const navigate = useNavigate();
   const [position, setPosition] = useState(null);
   const [totalQuestions, setTotalQuestions] = useState(null);
+  const [showEndModal, setShowEndModal] = useState(false);
+  const navigate = useNavigate();
 
-  // Check if session is active and light up
-  const checkStatus = async (sessionId) => {
+  const checkStatus = async (id) => {
     try {
-      const response = await axios.get(`http://localhost:5005/admin/session/${sessionId}/status`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          }
-        }
-      );
-      if (response.status === 200) {
-        setPosition(response.data.results.position);
-        setTotalQuestions(response.data.results.questions.length);
-        setSessionActive(true);
-      }
-    } catch (error) {
-      alert("Error fetching session:", error);
+      const response = await axios.get(`http://localhost:5005/admin/session/${id}/status`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setPosition(response.data.results.position);
+      setTotalQuestions(response.data.results.questions.length);
+    } catch (_) {
+      // session ended or unavailable
     }
   };
 
   useEffect(() => {
     if (!sessionId) return;
-    // Poll the status of the session every 2 seconds
-    const interval = setInterval(() => {
-      checkStatus(sessionId);
-    }, 2000);
+    checkStatus(sessionId);
+    const interval = setInterval(() => checkStatus(sessionId), 2000);
     return () => clearInterval(interval);
   }, [sessionId]);
 
-
-  // Mutation function
-  const mutation = async (type, successJob) => {
+  const mutation = async (type, onSuccess) => {
     try {
-      const response = await axios.post(`http://localhost:5005/admin/game/${gameId}/mutate`,
-        {
-          "mutationType": type
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          }
-        }
+      const response = await axios.post(
+        `http://localhost:5005/admin/game/${gameId}/mutate`,
+        { mutationType: type },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
-      if (response.status === 200) {
-        successJob && successJob();
-      }
+      if (response.status === 200) onSuccess?.();
     } catch (error) {
-      alert(error.response.data.error);
+      console.error(error.response?.data?.error);
     }
   };
 
   const handleStart = () => {
     mutation("START", () => {
-      setSessionActive(true);
       onRefresh?.();
     });
-  }
+  };
 
-  const handleStop = async () => {
+  const handleStop = () => {
     mutation("END", () => {
-      const goToResult = window.confirm("Would you like to view the results?");
-      if (goToResult) {
-        navigate(`/results/${sessionId}`);
-      } else {
-        onRefresh?.();
-      }
+      setShowEndModal(true);
+      onRefresh?.();
     });
-  }
+  };
 
   const handleAdvance = () => {
     mutation("ADVANCE", () => {
       checkStatus(sessionId);
       onRefresh?.();
     });
-  }
+  };
 
   return (
-    <div>
+    <>
+      <EndGameModal
+        isOpen={showEndModal}
+        onCancel={() => setShowEndModal(false)}
+        onConfirm={() => { setShowEndModal(false); navigate(`/results/${sessionId}`); }}
+      />
 
-      {/* active light, red or green */}
-      <div className="flex items-center absolute top-2 right-2 space-x-1">
-        <div
-          className={`w-3 h-3 rounded-full ${sessionActive ? 'bg-green-500' : 'bg-red-500'
-          }`}
-          title={sessionActive ? 'Active' : 'Inactive'}
-        ></div>
-        <span className="text-xs">
-          {sessionActive ? 'Active' : 'Inactive'}
-        </span>
-      </div>
-
-      {/* start/stop button */}
       {sessionId ? (
-        <>
-          {/* Loading status, only show if loading */}
-
-          <p className="my-1 absolute bottom-15 right-33 text-sm text-zinc-600">
-            Question {position + 1} / {totalQuestions}
-          </p>
-
-          {/* Skip button, only show if not at the end of the game */}
-          {position !== null && totalQuestions !== null && position < totalQuestions - 1 && (
-            <button
-              className="my-2 p-2 rounded-[.400rem] absolute bottom-0 right-40 cursor-pointer bg-blue-600 hover:bg-sky-400 text-white transition duration-300 ease-in-out"
-              onClick={handleAdvance}
-            >
-              Skip
-            </button>
-          )}
-
-          {/* Stop button, only show if game is active */}
-          <button
-            className="my-2 p-2 rounded-[.400rem] absolute bottom-0 right-10 bg-red-600 hover:bg-fuchsia-400 text-white transition duration-300 ease-in-out"
-            onClick={handleStop}
-          >
-            Stop Game
-          </button>
-          <div className="absolute right-10 z-10 p-4 bg-white border border-gray-300 shadow-md rounded-md top-14 w-[250px]">
-            <p className="my-2 text-sm">Session started!</p>
-            <p className="my-2 break-normal text-xs">
-              ID: <strong>{sessionId}</strong>
-            </p>
-            <CopyToClipboard text={`${window.location.origin}/session/join?sessionId=${sessionId}`}
+        <div className="mt-3 space-y-3">
+          {/* Session info */}
+          <div className="rounded-xl bg-slate-700/50 border border-white/5 px-3 py-2 flex items-center justify-between gap-2">
+            <div>
+              <p className="text-xs text-slate-400">Session ID</p>
+              <p className="text-sm font-mono font-semibold text-white">{sessionId}</p>
+            </div>
+            <CopyToClipboard
+              text={`${window.location.origin}/session/join?sessionId=${sessionId}`}
               onCopy={() => setCopied(true)}
             >
-              <button className="my-2 p-2 w-full rounded-[.400rem] cursor-pointer bg-blue-600 hover:bg-sky-400 text-xs text-white transition duration-300 ease-in-out">
-                {copied ? 'Copied' : 'Copy Link'}
+              <button className="px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 text-xs font-medium transition">
+                {copied ? '✓ Copied' : 'Copy Link'}
               </button>
             </CopyToClipboard>
           </div>
-        </>
+
+          {/* Progress */}
+          {position !== null && totalQuestions !== null && (
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                  style={{ width: `${((position + 1) / totalQuestions) * 100}%` }}
+                />
+              </div>
+              <span className="text-xs text-slate-400 shrink-0">
+                {position + 1} / {totalQuestions}
+              </span>
+            </div>
+          )}
+
+          {/* Controls */}
+          <div className="flex gap-2">
+            {position !== null && totalQuestions !== null && position < totalQuestions - 1 && (
+              <button
+                className="flex-1 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition flex items-center justify-center gap-1"
+                onClick={handleAdvance}
+              >
+                Next
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
+            <button
+              className="flex-1 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/40 text-red-400 text-sm font-medium transition"
+              onClick={handleStop}
+            >
+              End Game
+            </button>
+          </div>
+        </div>
       ) : (
         <button
-          className="my-2 p-2 rounded-[.400rem] absolute bottom-0 right-10 cursor-pointer bg-blue-600 hover:bg-sky-400 text-white transition duration-300 ease-in-out"
+          className="mt-3 w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 active:scale-95 text-white text-sm font-semibold transition duration-200 shadow-lg shadow-indigo-500/20"
           onClick={handleStart}
         >
           Start Game
         </button>
       )}
-
-    </div>
-
+    </>
   );
 }
+
 export default SessionButton;

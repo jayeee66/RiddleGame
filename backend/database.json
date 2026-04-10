@@ -8,9 +8,51 @@
     "jay29965008@gmail.com": {
       "name": "Jay",
       "password": "qqq",
-      "sessionActive": false
+      "sessionActive": true
     }
   },
-  "games": {},
-  "sessions": {}
+  "games": {
+    "100213436": {
+      "owner": "hayden@unsw.edu.au",
+      "active": null,
+      "oldSessions": [],
+      "id": 56513315,
+      "questions": [],
+      "name": "qq"
+    }
+  },
+  "sessions": {
+    "122993": {
+      "gameId": "100213436",
+      "position": -1,
+      "isoTimeLastQuestionStarted": null,
+      "players": {
+        "821718710": {
+          "name": "www",
+          "answers": []
+        }
+      },
+      "questions": [],
+      "active": true,
+      "answerAvailable": false
+    },
+    "765695": {
+      "gameId": "56513315",
+      "position": -1,
+      "isoTimeLastQuestionStarted": null,
+      "players": {
+        "559180660": {
+          "name": "Jay",
+          "answers": []
+        },
+        "583596022": {
+          "name": "d",
+          "answers": []
+        }
+      },
+      "questions": [],
+      "active": false,
+      "answerAvailable": false
+    }
+  }
 }

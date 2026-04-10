@@ -1,197 +1,136 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './index.css';
-import SessionButton from './StartGame';
+import GameCard from './Component/GameCard';
+import CreateGameModal from './Component/CreateGameModal';
+import DeleteGameModal from './Component/DeleteGameModal';
 
-function Dashboard() {
+function Dashboard({ logout }) {
   const [games, setGames] = useState([]);
   const [createForm, setCreateForm] = useState(false);
-  const [destroyForm, setDestroyForm] = useState(false);
-  const [newGame, setNewGame] = useState('');
-
-  const navigate = useNavigate();
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [newGameName, setNewGameName] = useState('');
 
   const fetchGames = async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5005/admin/games', {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+        headers: { accept: 'application/json', Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
       if (response.ok) {
         setGames(Object.values(data.games));
         localStorage.setItem('games', JSON.stringify(data.games));
-      } else {
-        alert(data.error);
       }
-    } catch (e) {
-      alert(e.message);
-    }
+    } catch (_) {}
   };
 
-  useEffect(() => {
-    fetchGames();
-  }, []);
+  useEffect(() => { fetchGames(); }, []);
 
   const putGames = async (gamesObject) => {
-    try {
-      const token = localStorage.getItem('token');
-      const payload = JSON.stringify({ games: gamesObject });
-      const response = await fetch('http://localhost:5005/admin/games', {
-        method: 'PUT',
-        headers: {
-          'Accept': '*/*',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: payload
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        alert(data.error);
-      }
-    } catch (e) {
-      alert(e.message);
-    }
+    const token = localStorage.getItem('token');
+    await fetch('http://localhost:5005/admin/games', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ games: gamesObject })
+    });
   };
 
   const createGame = async () => {
+    if (!newGameName.trim()) return;
     const token = localStorage.getItem('token');
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const owner = payload.email || 'unknown';
-    const games = localStorage.getItem('games');
-    const data = JSON.parse(games || '[]');
-    const gameId = data.length > 0
-      ? Math.max(...data.map(game => game.id)) + 1
-      : 56513315;
-    const newObject = {
-      id: gameId,
-      owner: owner,
-      active: null,
-      questions: [],
-      name: newGame,
-    };
-    const updatedGames = [...data, newObject];
-    localStorage.setItem('games', JSON.stringify(updatedGames));
-    setGames(updatedGames);
-    await putGames(updatedGames);
-    setNewGame('');
+    const owner = JSON.parse(atob(token.split('.')[1])).email || 'unknown';
+    const stored = JSON.parse(localStorage.getItem('games') || '[]');
+    const gameId = stored.length > 0 ? Math.max(...stored.map(g => g.id)) + 1 : 56513315;
+    const updated = [...stored, { id: gameId, owner, active: null, questions: [], name: newGameName.trim() }];
+    localStorage.setItem('games', JSON.stringify(updated));
+    setGames(updated);
+    await putGames(updated);
+    setNewGameName('');
+    setCreateForm(false);
   };
 
-  const destroyGame = async (gameID) => {
-    const games = localStorage.getItem('games');
-    const data = JSON.parse(games);
-    let updatedGames = data.filter(game => game.id !== gameID);
-    localStorage.setItem('games', JSON.stringify(updatedGames));
-    setGames(updatedGames);
-    await putGames(updatedGames);
+  const destroyGame = async (gameId) => {
+    const stored = JSON.parse(localStorage.getItem('games') || '[]');
+    const updated = stored.filter(g => g.id !== gameId);
+    localStorage.setItem('games', JSON.stringify(updated));
+    setGames(updated);
+    await putGames(updated);
+    setDeleteTarget(null);
   };
 
-  const totalDuration = (questions) => questions.reduce((acc, q) => acc + q.duration, 0);
-  console.log(games)
   return (
-    <div className="p-4">
-      <button
-        className="my-2 p-3 rounded-[.400rem] bg-blue-600 hover:bg-sky-400 text-white transition duration-300 ease-in-out"
-        onClick={() => setCreateForm(true)}
-      >
-        Create Game
-      </button>
-      {createForm && (
-        <div className="flex justify-center items-center fixed inset-0 bg-gray-800 bg-opacity-30 z-999">
-          <div className="p-6 rounded-[.600rem] bg-white w-full max-w-sm">
-            <h3 className="my-2 font-[600] text-center text-lg">Create Game</h3>
-            <input
-              type="text"
-              className="my-2 p-2 w-full rounded-[.400rem] border-1 border-solid"
-              placeholder="Name your new game"
-              value={newGame}
-              onChange={(e) => setNewGame(e.target.value)}
-            />
-            <div className="flex justify-center w-full gap-2">
-              <button
-                className="flex-1 my-2 p-3 rounded-[.400rem] bg-gray-600 text-white  hover:bg-zinc-400 transition duration-300 ease-in-out"
-                onClick={() => setCreateForm(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 my-2 p-3 rounded-[.400rem] bg-blue-600 hover:bg-sky-400 text-white transition duration-300 ease-in-out"
-                onClick={() => {
-                  createGame();
-                  setCreateForm(false);
-                }}
-              >
-                Create
-              </button>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800">
+
+      <nav className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur border-b border-white/5 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
           </div>
+          <span className="text-white font-bold text-lg">BigBrain</span>
         </div>
-      )}
+        <button
+          onClick={logout}
+          className="px-4 py-1.5 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition"
+        >
+          Logout
+        </button>
+      </nav>
 
-      <button
-        className="my-2 p-3 rounded-[.400rem] bg-red-600 hover:bg-fuchsia-400 text-white transition duration-300 ease-in-out"
-        onClick={() => setDestroyForm(true)}
-      >
-        Destroy Game
-      </button>
-      {destroyForm && (
-        <div className="flex justify-center items-center fixed inset-0 bg-gray-800 bg-opacity-30 z-999">
-          <div className="p-6 rounded-[0.600rem] bg-white w-full max-w-sm">
-            <h3 className="my-2 font-[600] text-center text-lg">Destroy Game</h3>
-            <input
-              type="text"
-              className="my-2 p-2 w-full rounded-[.400rem] border-1 border-solid"
-              placeholder="Select a gameID to destroy"
-              value={newGame}
-              onChange={(e) => setNewGame(e.target.value)}
-            />
-            <div className="flex justify-center w-full gap-2">
-              <button
-                className="flex-1 my-2 p-3 rounded-[0.400rem] bg-gray-600 text-white hover:bg-zinc-400 transition duration-300 ease-in-out"
-                onClick={() => setDestroyForm(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 my-2 p-3 rounded-[0.400rem] bg-red-600 hover:bg-fuchsia-400 text-white transition duration-300 ease-in-out"
-                onClick={() => {
-                  destroyGame(parseInt(newGame, 10));
-                  setDestroyForm(false);
-                }}
-              >
-                Destroy
-              </button>
-            </div>
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-white">My Games</h1>
+            <p className="text-slate-400 text-sm mt-1">{games.length} game{games.length !== 1 ? 's' : ''}</p>
           </div>
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 active:scale-95 text-white font-semibold text-sm transition shadow-lg shadow-indigo-500/25"
+            onClick={() => setCreateForm(true)}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New Game
+          </button>
         </div>
-      )}
 
-      <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {games.map((game) => (
-          <div key={game.id} className="relative border-1 border-solid p-4 rounded-[1rem] bg-white">
-            <h2 className="my-2 font-[700] mb-2">Game ID: {game.id}</h2>
-            <p><strong>Name:</strong> {game.name}</p>
-            <p><strong>Owner:</strong> {game.owner}</p>
-            <p><strong>Number of Questions:</strong> {game.questions.length}</p>
-            <p><strong>Total Duration:</strong> {totalDuration(game.questions)} sec</p>
-            <img
-              className="my-2 w-full h-32 object-cover rounded-[.400rem]"
-              src="https://heatherrobertsart.com/cdn/shop/products/1_84c051d7-0b22-4f5e-aee8-af8d7644cefd_1024x1024.png?v=1663394121"
-              alt="Thumbnail"
-              style={{ height: 150, width: 150 }}
-              onClick={() => navigate(`/game/${game.id}`)}
-            />
-            <SessionButton gameId={game.id} active={game.active} onRefresh={fetchGames} />
+        {games.length === 0 && (
+          <div className="text-center py-24">
+            <div className="w-16 h-16 rounded-2xl bg-slate-700/50 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <p className="text-slate-400 text-sm">No games yet. Create your first one!</p>
           </div>
+        )}
 
-        ))}
+        <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {games.map((game) => (
+            <GameCard
+              key={game.id}
+              game={game}
+              onDelete={setDeleteTarget}
+              onRefresh={fetchGames}
+            />
+          ))}
+        </div>
       </div>
+
+      <CreateGameModal
+        isOpen={createForm}
+        gameName={newGameName}
+        onChange={setNewGameName}
+        onCreate={createGame}
+        onCancel={() => { setCreateForm(false); setNewGameName(''); }}
+      />
+
+      <DeleteGameModal
+        isOpen={!!deleteTarget}
+        game={deleteTarget}
+        onConfirm={() => destroyGame(deleteTarget.id)}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

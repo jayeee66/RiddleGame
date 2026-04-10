@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import AnswerButton from './Component/AnswerButton';
 
 function PlayGame() {
   const navigate = useNavigate();
@@ -102,14 +103,14 @@ function PlayGame() {
 
           <div className="grid gap-2">
             {question?.answers.map((answer, i) => (
-              <button
+              <AnswerButton
                 key={i}
-                className={`p-3 w-full border-1 border-solid rounded text-left hover:bg-gray-300 ${selectedAnswer.includes(answer) ? 'bg-gray-300' : ''}`}
-                onClick={() => putAnswers(answer)}
+                answer={answer}
+                selected={selectedAnswer.includes(answer)}
+                correct={timer === 0 && correctAnswers.includes(answer)}
                 disabled={timer === 0}
-              >
-                {answer}
-              </button>
+                onClick={() => putAnswers(answer)}
+              />
             ))}
           </div>
 
