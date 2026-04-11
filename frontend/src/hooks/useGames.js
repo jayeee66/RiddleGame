@@ -28,8 +28,12 @@ export function useGames() {
         const normalized = normalizeGames(data.games);
         setGames(Object.values(normalized));
         localStorage.setItem('games', JSON.stringify(normalized));
+        return;
       }
     } catch (_) {}
+    // fallback to localStorage — strip active/oldSessions since sessions are server-only
+    const stored = normalizeGames(JSON.parse(localStorage.getItem('games') || '{}'));
+    setGames(Object.values(stored).map(g => ({ ...g, active: null, oldSessions: [] })));
   };
 
   const putGames = async (gamesObject) => {

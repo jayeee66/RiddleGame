@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGames } from '../hooks/useGames';
 import Modal from '../Component/Modal';
+import MediaInput from '../Component/MediaInput';
 
 function EditGame() {
   const { gameId } = useParams();
@@ -15,6 +16,8 @@ function EditGame() {
   const [questionType, setQuestionType] = useState('single');
   const [idx, setIdx] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState([]);
+  const [media, setMedia] = useState(null);
+  const [mediaType, setMediaType] = useState(null);
 
   useEffect(() => {
     const stored = getStoredGames();
@@ -30,6 +33,8 @@ function EditGame() {
     setQuestionType('single');
     setIdx(0);
     setCorrectAnswers([]);
+    setMedia(null);
+    setMediaType(null);
   };
 
   const addQuestion = async () => {
@@ -51,6 +56,8 @@ function EditGame() {
       answers: questionType === 'judgement' ? ['True', 'False'] : [...answers],
       questionType,
       correctAnswers: answersObject,
+      media,
+      mediaType,
     };
     const updatedGame = { ...game, questions: [...game.questions, question] };
     setGame(updatedGame);
@@ -217,6 +224,15 @@ function EditGame() {
             className={inputCls}
             value={duration}
             onChange={e => setDuration(e.target.value)}
+          />
+        </div>
+
+        {/* Media */}
+        <div className="mb-4">
+          <MediaInput
+            media={media}
+            mediaType={mediaType}
+            onChange={(src, type) => { setMedia(src); setMediaType(type); }}
           />
         </div>
 

@@ -29,7 +29,7 @@ function Dashboard({ logout }) {
 
   const destroyGame = async (gameId) => {
     const stored = getStoredGames();
-    const { [gameId]: _, ...updated } = stored;
+    const updated = Object.fromEntries(Object.entries(stored).filter(([k]) => String(k) !== String(gameId)));
     localStorage.setItem('games', JSON.stringify(updated));
     await putGames(updated);
     await fetchGames();

@@ -6,34 +6,46 @@ import EndGameModal from './EndGameModal';
 import { useSessionStatus } from '../hooks/useSessionStatus';
 
 function SessionButton({ gameId, active, onRefresh }) {
-  const sessionId = active || null;
+  const [localSessionId, setLocalSessionId] = useState(null);
+  const sessionId = localSessionId || active || null;
   const [copied, setCopied] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
+  const [endedSessionId, setEndedSessionId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { position, totalQuestions, checkStatus } = useSessionStatus(sessionId);
 
   const mutation = async (type, onSuccess) => {
+    setLoading(true);
+    setError(null);
     try {
       const response = await axios.post(
         `http://localhost:5005/admin/game/${gameId}/mutate`,
         { mutationType: type },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
-      if (response.status === 200) onSuccess?.();
-    } catch (error) {
-      console.error(error.response?.data?.error);
+      if (response.status === 200) onSuccess?.(response.data?.data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Something went wrong');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleStart = () => {
-    mutation("START", () => {
+    mutation("START", (data) => {
+      if (data?.sessionId) setLocalSessionId(data.sessionId);
       onRefresh?.();
     });
   };
 
   const handleStop = () => {
+    const currentSessionId = sessionId;
     mutation("END", () => {
+      setEndedSessionId(currentSessionId);
       setShowEndModal(true);
+      setLocalSessionId(null);
       onRefresh?.();
     });
   };
@@ -50,8 +62,12 @@ function SessionButton({ gameId, active, onRefresh }) {
       <EndGameModal
         isOpen={showEndModal}
         onCancel={() => setShowEndModal(false)}
-        onConfirm={() => { setShowEndModal(false); navigate(`/results/${sessionId}`); }}
+        onConfirm={() => { setShowEndModal(false); navigate(`/results/${endedSessionId}`); }}
       />
+
+      {error && (
+        <p className="text-xs text-red-400 mt-1">{error}</p>
+      )}
 
       {sessionId ? (
         <div className="mt-3 space-y-3">
@@ -77,42 +93,48 @@ function SessionButton({ gameId, active, onRefresh }) {
               <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-indigo-500 rounded-full transition-all duration-500"
-                  style={{ width: `${((position + 1) / totalQuestions) * 100}%` }}
+                  style={{ width: `${totalQuestions > 0 ? ((position + 1) / totalQuestions) * 100 : 0}%` }}
                 />
               </div>
               <span className="text-xs text-slate-400 shrink-0">
-                {position + 1} / {totalQuestions}
+                {position === -1 ? 'Not started' : `${position + 1} / ${totalQuestions}`}
               </span>
             </div>
           )}
 
           {/* Controls */}
           <div className="flex gap-2">
-            {position !== null && totalQuestions !== null && position < totalQuestions - 1 && (
+            {position === null || totalQuestions === null ? (
+              <p className="text-slate-500 text-xs w-full text-center py-2">Loading…</p>
+            ) : position < totalQuestions - 1 ? (
               <button
-                className="flex-1 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition flex items-center justify-center gap-1"
+                className="flex-1 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold transition flex items-center justify-center gap-1 disabled:opacity-50"
                 onClick={handleAdvance}
+                disabled={loading}
               >
-                Next
+                {position === -1 ? 'Start First Question' : 'Next Question'}
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
+            ) : (
+              <button
+                className="flex-1 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/40 text-red-400 text-sm font-medium transition disabled:opacity-50"
+                onClick={handleStop}
+                disabled={loading}
+              >
+                End Game
+              </button>
             )}
-            <button
-              className="flex-1 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/40 text-red-400 text-sm font-medium transition"
-              onClick={handleStop}
-            >
-              End Game
-            </button>
           </div>
         </div>
       ) : (
         <button
-          className="mt-3 w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 active:scale-95 text-white text-sm font-semibold transition duration-200 shadow-lg shadow-indigo-500/20"
+          className="mt-3 w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 active:scale-95 text-white text-sm font-semibold transition duration-200 shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleStart}
+          disabled={loading}
         >
-          Start Game
+          {loading ? 'Starting…' : 'Start Game'}
         </button>
       )}
     </>

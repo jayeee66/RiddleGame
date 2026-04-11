@@ -34,7 +34,9 @@ function PlayGame() {
           questionText: q.questionText,
           duration: q.duration,
           answers,
-          correctAnswers: q.correctAnswers
+          correctAnswers: q.correctAnswers,
+          media: q.media || null,
+          mediaType: q.mediaType || null,
         });
         setTimer(q.duration);
         setStartTime(new Date(q.isoTimeLastQuestionStarted));
@@ -98,6 +100,15 @@ function PlayGame() {
         <h1 className="my-2 font-[700] text-xl">Loading...</h1>
       ) : (
         <div>
+          {question?.media && (
+            <div className="mb-3 rounded-xl overflow-hidden">
+              {question.mediaType === 'image' ? (
+                <img src={question.media} alt="" className="w-full max-h-64 object-contain" />
+              ) : (
+                <video src={question.media} autoPlay muted controls className="w-full max-h-64" />
+              )}
+            </div>
+          )}
           <h1 className="my-2 font-[700] text-xl">{question?.questionText}</h1>
           <p className="my-2 text-sm">Time remaining: {timer} seconds</p>
 
