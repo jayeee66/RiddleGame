@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useGames } from './hooks/useGames';
-import './index.css';
+import { useGames } from '../hooks/useGames';
+import '../index.css';
 
 function EditQuestion() {
   const { gameId, questionId } = useParams();

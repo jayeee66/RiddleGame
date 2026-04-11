@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import AnswerButton from './Component/AnswerButton';
+import AnswerButton from '../Component/AnswerButton';
 
 function PlayGame() {
   const navigate = useNavigate();

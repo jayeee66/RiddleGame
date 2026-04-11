@@ -6,6 +6,15 @@ function getToken() {
   return localStorage.getItem('token');
 }
 
+// Normalize to object keyed by game id, handles both legacy array and object formats
+function normalizeGames(raw) {
+  if (!raw) return {};
+  if (Array.isArray(raw)) {
+    return raw.reduce((acc, g) => { acc[g.id] = g; return acc; }, {});
+  }
+  return raw;
+}
+
 export function useGames() {
   const [games, setGames] = useState([]);
 
@@ -16,28 +25,38 @@ export function useGames() {
       });
       const data = await res.json();
       if (res.ok) {
-        const list = Object.values(data.games);
-        setGames(list);
-        localStorage.setItem('games', JSON.stringify(data.games));
+        const normalized = normalizeGames(data.games);
+        setGames(Object.values(normalized));
+        localStorage.setItem('games', JSON.stringify(normalized));
       }
     } catch (_) {}
   };
 
   const putGames = async (gamesObject) => {
-    await fetch(`${API}/admin/games`, {
+    const gamesArray = Array.isArray(gamesObject)
+      ? gamesObject
+      : Object.values(gamesObject);
+    const res = await fetch(`${API}/admin/games`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-      body: JSON.stringify({ games: gamesObject })
+      body: JSON.stringify({ games: gamesArray })
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error('putGames failed:', res.status, err);
+    }
   };
 
-  // Read games from localStorage (for EditGame / EditQuestion where we don't need to fetch)
-  const getStoredGames = () => JSON.parse(localStorage.getItem('games') || '{}');
+  const getStoredGames = () => {
+    const raw = JSON.parse(localStorage.getItem('games') || '{}');
+    return normalizeGames(raw);
+  };
 
-  // Update a single game in localStorage + backend
   const updateGame = async (updatedGame) => {
     const stored = getStoredGames();
-    const updated = { ...stored, [updatedGame.id]: updatedGame };
+    // Find the correct key (might differ from id in corrupted data)
+    const existingKey = Object.keys(stored).find(k => stored[k].id === updatedGame.id) || updatedGame.id;
+    const updated = { ...stored, [existingKey]: updatedGame };
     localStorage.setItem('games', JSON.stringify(updated));
     await putGames(updated);
   };

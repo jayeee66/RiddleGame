@@ -8,15 +8,15 @@ import {
   Navigate,
 } from 'react-router-dom';
 
-import Register from './Register';
-import Login from './Login';
-import Dashboard from './Dashboard';
-import Result from './Result';
-import EditGame from './EditGame';
-import EditQuestion from './EditQuestion';
-import JoinGame from './JoinGame';
-import PlayGame from './PlayGame';
-import PlayerResult from './PlayerResult';
+import Register from './Pages/Register';
+import Login from './Pages/Login';
+import Dashboard from './Pages/Dashboard';
+import Result from './Pages/Result';
+import EditGame from './Pages/EditGame';
+import EditQuestion from './Pages/EditQuestion';
+import JoinGame from './Pages/JoinGame';
+import PlayGame from './Pages/PlayGame';
+import PlayerResult from './Pages/PlayerResult';
 import NavBar from './Component/NavBar';
 
 function Pages() {

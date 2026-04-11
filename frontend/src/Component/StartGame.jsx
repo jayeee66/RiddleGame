@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import EndGameModal from './Component/EndGameModal';
-import { useSessionStatus } from './hooks/useSessionStatus';
+import EndGameModal from './EndGameModal';
+import { useSessionStatus } from '../hooks/useSessionStatus';
 
 function SessionButton({ gameId, active, onRefresh }) {
   const sessionId = active || null;

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import GameCard from './Component/GameCard';
-import CreateGameModal from './Component/CreateGameModal';
-import DeleteGameModal from './Component/DeleteGameModal';
-import NavBar from './Component/NavBar';
-import { useGames } from './hooks/useGames';
+import GameCard from '../Component/GameCard';
+import CreateGameModal from '../Component/CreateGameModal';
+import DeleteGameModal from '../Component/DeleteGameModal';
+import NavBar from '../Component/NavBar';
+import { useGames } from '../hooks/useGames';
 
 function Dashboard({ logout }) {
   const { games, fetchGames, putGames, getStoredGames } = useGames();

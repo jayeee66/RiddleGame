@@ -3,21 +3,50 @@
     "hayden@unsw.edu.au": {
       "name": "Hayden Smith",
       "password": "adummypassword",
-      "sessionActive": false
+      "sessionActive": true
     },
     "jay29965008@gmail.com": {
       "name": "Jay",
       "password": "qqq",
-      "sessionActive": true
+      "sessionActive": false
     }
   },
   "games": {
     "100213436": {
       "owner": "hayden@unsw.edu.au",
-      "active": null,
+      "active": 122993,
       "oldSessions": [],
-      "id": 56513315,
-      "questions": [],
+      "id": 100213436,
+      "questions": [
+        {
+          "id": 1,
+          "questionText": "33",
+          "duration": 10,
+          "answers": [
+            "33",
+            "jay"
+          ],
+          "questionType": "single",
+          "correctAnswers": [
+            "33"
+          ]
+        },
+        {
+          "id": 2,
+          "questionText": "誰最帥",
+          "duration": 20,
+          "answers": [
+            "Jay",
+            "Chen",
+            ""
+          ],
+          "questionType": "multiple",
+          "correctAnswers": [
+            "Chen",
+            "Jay"
+          ]
+        }
+      ],
       "name": "qq"
     }
   },

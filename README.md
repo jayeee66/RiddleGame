@@ -1,4 +1,4 @@
-# RiddleGame
+# BigBrain
 
 A full-stack real-time quiz platform inspired by Kahoot. Admins create and host quiz sessions while players join and answer questions live with a countdown timer.
 
