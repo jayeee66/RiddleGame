@@ -1,7 +1,30 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import AnswerButton from '../Component/AnswerButton';
+
+const getEmbedUrl = (url) => {
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=0`;
+  const vm = url.match(/vimeo\.com\/(\d+)/);
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+  return null;
+};
+
+function VideoPlayer({ src }) {
+  const embed = getEmbedUrl(src);
+  if (embed) {
+    return (
+      <iframe
+        src={embed}
+        className="w-full max-h-64 aspect-video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    );
+  }
+  return <video src={src} controls className="w-full max-h-64" />;
+}
 
 function PlayGame() {
   const navigate = useNavigate();
@@ -9,61 +32,48 @@ function PlayGame() {
   const [started, setStarted] = useState(null);
   const [question, setQuestion] = useState(null);
   const [timer, setTimer] = useState(0);
-  const [lastQuestion, setLastQuestion] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState([]);
   const isMulti = question?.type === 'multiple';
   const [correctAnswers, setCorrectAnswers] = useState([]);
-  const [startTime, setStartTime] = useState(null);
+  const startTimeRef = useRef(null);
+  const durationRef = useRef(0);
+  const lastIsoRef = useRef(null);
+  const answeredRef = useRef(false);
 
+  // 1. Poll until game starts
   useEffect(() => {
     if (started) return;
     const interval = setInterval(async () => {
-      const getStarted = await axios.get(`http://localhost:5005/play/${playerId}/status`);
-      setStarted(getStarted.data.started);
+      const res = await axios.get(`http://localhost:5005/play/${playerId}/status`);
+      setStarted(res.data.started);
     }, 500);
     return () => clearInterval(interval);
-  }, [playerId, started]);
+  }, [started, playerId]);
 
   const fetchQuestion = async () => {
     try {
       const response = await axios.get(`http://localhost:5005/play/${playerId}/question`);
       const q = response.data.question;
+      if (q.isoTimeLastQuestionStarted === lastIsoRef.current) return;
+      lastIsoRef.current = q.isoTimeLastQuestionStarted;
+      startTimeRef.current = new Date(q.isoTimeLastQuestionStarted);
+      durationRef.current = q.duration;
+      answeredRef.current = false;
       const answers = q.answers.filter(a => a && a.trim() !== '');
-      if (!lastQuestion || lastQuestion !== q.questionText) {
-        setQuestion({
-          questionText: q.questionText,
-          duration: q.duration,
-          answers,
-          correctAnswers: q.correctAnswers,
-          media: q.media || null,
-          mediaType: q.mediaType || null,
-        });
-        setTimer(q.duration);
-        setStartTime(new Date(q.isoTimeLastQuestionStarted));
-        setLastQuestion(q.questionText);
-        setSelectedAnswer([]);
-      }
+      setQuestion({
+        questionText: q.questionText,
+        duration: q.duration,
+        answers,
+        correctAnswers: q.correctAnswers,
+        media: q.media || null,
+        mediaType: q.mediaType || null,
+      });
+      setTimer(q.duration);
+      setSelectedAnswer([]);
     } catch (error) {
       if (error) navigate(`/player/${playerId}/result`);
     }
   };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (started) fetchQuestion();
-    }, 500);
-    return () => clearInterval(interval);
-  }, [playerId, question, started]);
-
-  useEffect(() => {
-    const countdown = setInterval(() => {
-      const now = new Date();
-      const end = new Date(startTime.getTime() + question.duration * 1000);
-      const timeLeft = Math.max(Math.ceil((end - now) / 1000), 0);
-      setTimer(timeLeft);
-    }, 1000);
-    return () => clearInterval(countdown);
-  }, [question, startTime, started]);
 
   const fetchAnswers = async () => {
     try {
@@ -74,9 +84,29 @@ function PlayGame() {
     }
   };
 
+  // 2. Poll for new questions
   useEffect(() => {
-    if (timer === 0) fetchAnswers();
-  }, [timer]);
+    if (!started) return;
+    const interval = setInterval(fetchQuestion, 500);
+    return () => clearInterval(interval);
+  }, [started]);
+
+  // 3. Countdown timer + trigger fetchAnswers once when time runs out
+  useEffect(() => {
+    if (!started) return;
+    const countdown = setInterval(() => {
+      if (!startTimeRef.current) return;
+      const now = new Date();
+      const end = new Date(startTimeRef.current.getTime() + durationRef.current * 1000);
+      const timeLeft = Math.max(Math.ceil((end - now) / 1000), 0);
+      setTimer(timeLeft);
+      if (timeLeft === 0 && !answeredRef.current) {
+        answeredRef.current = true;
+        fetchAnswers();
+      }
+    }, 500);
+    return () => clearInterval(countdown);
+  }, [started]);
 
   const putAnswers = async (answer) => {
     const updatedAnswers = isMulti
@@ -105,7 +135,7 @@ function PlayGame() {
               {question.mediaType === 'image' ? (
                 <img src={question.media} alt="" className="w-full max-h-64 object-contain" />
               ) : (
-                <video src={question.media} autoPlay muted controls className="w-full max-h-64" />
+                <VideoPlayer src={question.media} />
               )}
             </div>
           )}
@@ -125,7 +155,7 @@ function PlayGame() {
             ))}
           </div>
 
-          {timer === 0 && (
+          {timer === 0 && question && correctAnswers.length > 0 && (
             <div className="absolute inset-0 bg-gray bg-opacity-40 flex items-center justify-center z-50 animate-fade-in">
               <div className="bg-white p-6 rounded-lg shadow-lg text-center transform scale-95">
                 <p className="text-green-800 font-[600] mb-2 text-lg">Correct answers</p>

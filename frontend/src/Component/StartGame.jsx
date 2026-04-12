@@ -28,6 +28,7 @@ function SessionButton({ gameId, active, onRefresh }) {
       if (response.status === 200) onSuccess?.(response.data?.data);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
+      onRefresh?.();
     } finally {
       setLoading(false);
     }
