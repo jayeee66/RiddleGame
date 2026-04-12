@@ -33,12 +33,11 @@ function PlayGame() {
   const [question, setQuestion] = useState(null);
   const [timer, setTimer] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState([]);
-  const isMulti = question?.type === 'multiple';
   const [correctAnswers, setCorrectAnswers] = useState([]);
+  const correctAnswersRef = useRef([]);
   const startTimeRef = useRef(null);
   const durationRef = useRef(0);
   const lastIsoRef = useRef(null);
-  const answeredRef = useRef(false);
 
   // 1. Poll until game starts
   useEffect(() => {
@@ -58,10 +57,11 @@ function PlayGame() {
       lastIsoRef.current = q.isoTimeLastQuestionStarted;
       startTimeRef.current = new Date(q.isoTimeLastQuestionStarted);
       durationRef.current = q.duration;
-      answeredRef.current = false;
+      correctAnswersRef.current = [];
       const answers = q.answers.filter(a => a && a.trim() !== '');
       setQuestion({
         questionText: q.questionText,
+        questionType: q.questionType,
         duration: q.duration,
         answers,
         correctAnswers: q.correctAnswers,
@@ -69,19 +69,20 @@ function PlayGame() {
         mediaType: q.mediaType || null,
       });
       setTimer(q.duration);
+      selectedAnswerRef.current = [];
       setSelectedAnswer([]);
+      setCorrectAnswers([]);
     } catch (error) {
-      if (error) navigate(`/player/${playerId}/result`);
+      if (error.response?.status === 400) navigate(`/player/${playerId}/result`);
     }
   };
 
   const fetchAnswers = async () => {
     try {
       const response = await axios.get(`http://localhost:5005/play/${playerId}/answer`);
+      correctAnswersRef.current = response.data.answers;
       setCorrectAnswers(response.data.answers);
-    } catch (error) {
-      alert(error.response.data.error);
-    }
+    } catch (_) {}
   };
 
   // 2. Poll for new questions
@@ -100,26 +101,28 @@ function PlayGame() {
       const end = new Date(startTimeRef.current.getTime() + durationRef.current * 1000);
       const timeLeft = Math.max(Math.ceil((end - now) / 1000), 0);
       setTimer(timeLeft);
-      if (timeLeft === 0 && !answeredRef.current) {
-        answeredRef.current = true;
+      if (timeLeft === 0 && correctAnswersRef.current.length === 0) {
         fetchAnswers();
       }
     }, 500);
     return () => clearInterval(countdown);
   }, [started]);
 
+  const selectedAnswerRef = useRef([]);
+
   const putAnswers = async (answer) => {
+    const isMulti = question?.questionType === 'multiple';
+    const prev = selectedAnswerRef.current;
     const updatedAnswers = isMulti
-      ? selectedAnswer.includes(answer)
-        ? selectedAnswer.filter((a) => a !== answer)
-        : [...selectedAnswer, answer]
+      ? prev.includes(answer)
+        ? prev.filter((a) => a !== answer)
+        : [...prev, answer]
       : [answer];
+    selectedAnswerRef.current = updatedAnswers;
     setSelectedAnswer(updatedAnswers);
     try {
       await axios.put(`http://localhost:5005/play/${playerId}/answer`, { answers: updatedAnswers });
-    } catch (error) {
-      alert(error.response.data.error);
-    }
+    } catch (_) {}
   };
 
   return (
