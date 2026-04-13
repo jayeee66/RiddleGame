@@ -47,7 +47,9 @@ function Pages() {
     navigate('/login');
   };
 
-  const showFloatingNav = token && location.pathname !== '/dashboard';
+  const playerPaths = ['/session/join', '/play/', '/player/'];
+  const isPlayerPage = playerPaths.some(p => location.pathname.startsWith(p));
+  const showFloatingNav = token && !isPlayerPage && location.pathname !== '/dashboard';
 
   return (
     <>

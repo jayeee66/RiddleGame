@@ -1,4 +1,4 @@
-import SessionButton from './StartGame';
+import SessionButton from './SessionButton';
 
 function GameCard({ game, onDelete, onRefresh }) {
   const totalDuration = (questions) =>

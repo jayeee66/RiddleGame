@@ -11,25 +11,17 @@ function JoinGame() {
 
   // Join game
   const handleJoin = async () => {
+    if (name === '') {
+      alert("Please enter your name");
+      return;
+    }
     try {
       const response = await axios.post(`http://localhost:5005/play/join/${sessionId}`,
-        {
-          name: name,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
+        { name: name },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
-      if (name === '') {
-        alert("Please enter your name");
-        return;
-      }
       if (response.status === 200) {
-        const playerId = response.data.playerId;
-        console.log("welcome", playerId);
-        navigate(`/play/${playerId}`); // Navigate to the game page
+        navigate(`/play/${response.data.playerId}`);
       }
     } catch (error) {
       alert(error.response.data.error);

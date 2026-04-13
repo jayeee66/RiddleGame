@@ -16,13 +16,6 @@ function PlayerResult() {
   const totalQuestions = playerResult.length;
   const score = playerResult.filter((a) => a.correct).length;
   const scoreRate = Math.round((score / totalQuestions) * 100);
-  // console.log(scoreRate); 
-  for (let i = 0; i < totalQuestions; i++) {
-    const startTime = new Date(playerResult[i].questionStartedAt);
-    const endTime = new Date(playerResult[i].answeredAt);
-    const timeDiff = (endTime - startTime) / 1000;
-    console.log(timeDiff);
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800 p-6">
