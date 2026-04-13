@@ -90,70 +90,97 @@ function Result() {
 
   // Loading
   if (loading) {
-    return <p className="p-4">Loading...</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin mx-auto mb-4" />
+          <p className="text-slate-300 text-lg font-medium">Loading results...</p>
+        </div>
+      </div>
+    );
   }
   if (!result) {
-    return <p className="p-4">No results found</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800">
+        <p className="text-slate-400 text-lg">No results found</p>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800 p-6">
+      <div className="max-w-3xl mx-auto space-y-8">
+        <h1 className="text-3xl font-bold text-white text-center pt-4">Game Results</h1>
 
-      {/* Top 5 players table*/}
-      <table>
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2">Name</th>
-            <th className="p-2">Score</th>
-          </tr>
-        </thead>
-        <tbody>
-          {top5.map((player, i) => (
-            <tr key={i}>
-              <td className="p-2">{player.name}</td>
-              <td className="p-2">{player.score}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Charts */}
-      <div className="my-8 space-y-10">
-        {/* Correct Rate Bar Chart */}
-        <div>
-          <h2 className="my-2 font-[600] font-lg">Correct Rate for answering per Question (%)</h2>
-          <ResponsiveContainer width="40%" height={500}>
-            <BarChart data={chartData}>
-              <XAxis dataKey="question" />
-              <YAxis domain={[0, 100]} />
-              <Tooltip
-                formatter={(value) => [`${value}`, 'Correct Rate']}  // [value, name]
-              />
-              <Bar dataKey="correctRate" fill="#8884d8" unit="%" />
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Top 5 leaderboard */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-white/10">
+            <h2 className="text-white font-semibold">Top Players</h2>
+          </div>
+          <table className="table-auto w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="px-5 py-3 text-slate-400 font-medium text-left">Rank</th>
+                <th className="px-5 py-3 text-slate-400 font-medium text-left">Name</th>
+                <th className="px-5 py-3 text-slate-400 font-medium text-center">Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {top5.map((player, i) => (
+                <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition">
+                  <td className="px-5 py-3 text-slate-400">
+                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                  </td>
+                  <td className="px-5 py-3 text-white font-medium">{player.name}</td>
+                  <td className="px-5 py-3 text-center">
+                    <span className="inline-block px-2.5 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 text-xs font-semibold">
+                      {player.score}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        {/* Average Time Line Chart */}
-        <div>
-          <h2 className="my-2 font-[600] font-lg">Average Time for answering per Question (s)</h2>
-          <ResponsiveContainer width="40%" height={500}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="question" />
-              <YAxis domain={[0, maxTime]} />
-              <Tooltip
-                formatter={(value) => [`${value}`, 'Average Time']}  // [value, name]
-              />
-              <Line dataKey="avgTime" stroke="#8884d8" unit="s" />
-            </LineChart>
-          </ResponsiveContainer>
+        {/* Charts */}
+        <div className="space-y-6">
+          {/* Correct Rate Bar Chart */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+            <h2 className="text-white font-semibold mb-4">Correct Rate per Question (%)</h2>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={chartData}>
+                <XAxis dataKey="question" stroke="#64748b" tick={{ fill: '#94a3b8' }} />
+                <YAxis domain={[0, 100]} stroke="#64748b" tick={{ fill: '#94a3b8' }} />
+                <Tooltip
+                  contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#fff' }}
+                  formatter={(value) => [`${value}%`, 'Correct Rate']}
+                />
+                <Bar dataKey="correctRate" fill="#6366f1" radius={[4, 4, 0, 0]} unit="%" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Average Time Line Chart */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+            <h2 className="text-white font-semibold mb-4">Average Answer Time per Question (s)</h2>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="question" stroke="#64748b" tick={{ fill: '#94a3b8' }} />
+                <YAxis domain={[0, maxTime]} stroke="#64748b" tick={{ fill: '#94a3b8' }} />
+                <Tooltip
+                  contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#fff' }}
+                  formatter={(value) => [`${value}s`, 'Average Time']}
+                />
+                <Line dataKey="avgTime" stroke="#818cf8" strokeWidth={2} dot={{ fill: '#818cf8' }} unit="s" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>
-
-
-  )
+  );
 }
 
 export default Result;

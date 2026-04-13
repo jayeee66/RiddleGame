@@ -37,30 +37,32 @@ function JoinGame() {
   };
 
   return (
-    <div className="flex justify-center items-center fixed inset-0 bg-gray-800 bg-opacity-30">
-      <div className="p-6 rounded-[.600rem] bg-white w-full max-w-1/6">
-        <h3 className="my-2 font-[600] text-center text-lg">Join Game</h3>
-        <div className="my-2">
-          <label className="my-1 font-[600] text-base flow-root">Please enter your name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="my-2 p-2 w-full rounded-[.400rem] border-1 border-solid border-gray-300"
-            placeholder="Enter your name"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleJoin();
-              }
-            }}
-          />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800">
+      <div className="w-full max-w-sm mx-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8">
+        <h3 className="text-2xl font-bold text-white text-center mb-6">Join Game</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Your name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              placeholder="Enter your name"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleJoin();
+                }
+              }}
+            />
+          </div>
+          <button
+            onClick={handleJoin}
+            className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 active:scale-95 text-white font-semibold transition duration-200 shadow-lg shadow-indigo-500/20"
+          >
+            Join Game
+          </button>
         </div>
-        <button
-          onClick={handleJoin}
-          className="my-2 p-3 w-full rounded-[.400rem] bg-blue-600 hover:bg-sky-400 text-white transition duration-300 ease-in-out"
-        >
-          Join Game
-        </button>
       </div>
     </div>
   );

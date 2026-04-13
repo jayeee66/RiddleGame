@@ -34,10 +34,10 @@ function PlayGame() {
   const [timer, setTimer] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState([]);
   const [correctAnswers, setCorrectAnswers] = useState([]);
-  const correctAnswersRef = useRef([]);
   const startTimeRef = useRef(null);
   const durationRef = useRef(0);
   const lastIsoRef = useRef(null);
+  const answeredRef = useRef(false);
 
   // 1. Poll until game starts
   useEffect(() => {
@@ -57,7 +57,7 @@ function PlayGame() {
       lastIsoRef.current = q.isoTimeLastQuestionStarted;
       startTimeRef.current = new Date(q.isoTimeLastQuestionStarted);
       durationRef.current = q.duration;
-      correctAnswersRef.current = [];
+      answeredRef.current = false;
       const answers = q.answers.filter(a => a && a.trim() !== '');
       setQuestion({
         questionText: q.questionText,
@@ -80,9 +80,10 @@ function PlayGame() {
   const fetchAnswers = async () => {
     try {
       const response = await axios.get(`http://localhost:5005/play/${playerId}/answer`);
-      correctAnswersRef.current = response.data.answers;
       setCorrectAnswers(response.data.answers);
-    } catch (_) {}
+    } catch (_) {
+      answeredRef.current = false;
+    }
   };
 
   // 2. Poll for new questions
@@ -101,7 +102,8 @@ function PlayGame() {
       const end = new Date(startTimeRef.current.getTime() + durationRef.current * 1000);
       const timeLeft = Math.max(Math.ceil((end - now) / 1000), 0);
       setTimer(timeLeft);
-      if (timeLeft === 0 && correctAnswersRef.current.length === 0) {
+      if (timeLeft === 0 && !answeredRef.current) {
+        answeredRef.current = true;
         fetchAnswers();
       }
     }, 500);
@@ -126,45 +128,63 @@ function PlayGame() {
   };
 
   return (
-    <div className="flex min-h-screen justify-center items-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800 p-4">
       {!started ? (
-        <h1 className="my-2 font-[700] text-xl">Waiting for game to start...</h1>
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin mx-auto mb-4" />
+          <p className="text-slate-300 text-lg font-medium">Waiting for game to start...</p>
+        </div>
       ) : !question ? (
-        <h1 className="my-2 font-[700] text-xl">Loading...</h1>
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin mx-auto mb-4" />
+          <p className="text-slate-300 text-lg font-medium">Loading...</p>
+        </div>
       ) : (
-        <div>
-          {question?.media && (
-            <div className="mb-3 rounded-xl overflow-hidden">
-              {question.mediaType === 'image' ? (
-                <img src={question.media} alt="" className="w-full max-h-64 object-contain" />
-              ) : (
-                <VideoPlayer src={question.media} />
-              )}
-            </div>
-          )}
-          <h1 className="my-2 font-[700] text-xl">{question?.questionText}</h1>
-          <p className="my-2 text-sm">Time remaining: {timer} seconds</p>
+        <div className="w-full max-w-xl">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">
+            {question?.media && (
+              <div className="rounded-xl overflow-hidden">
+                {question.mediaType === 'image' ? (
+                  <img src={question.media} alt="" className="w-full max-h-64 object-contain" />
+                ) : (
+                  <VideoPlayer src={question.media} />
+                )}
+              </div>
+            )}
 
-          <div className="grid gap-2">
-            {question?.answers.map((answer, i) => (
-              <AnswerButton
-                key={i}
-                answer={answer}
-                selected={selectedAnswer.includes(answer)}
-                correct={timer === 0 && correctAnswers.includes(answer)}
-                disabled={timer === 0}
-                onClick={() => putAnswers(answer)}
-              />
-            ))}
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-white font-semibold text-lg leading-snug">{question?.questionText}</h1>
+              <div className={`shrink-0 text-2xl font-bold tabular-nums px-3 py-1 rounded-xl border ${timer <= 5 ? 'text-red-400 border-red-500/40 bg-red-500/10' : 'text-indigo-300 border-indigo-500/40 bg-indigo-500/10'}`}>
+                {timer}s
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              {question?.answers.map((answer, i) => (
+                <AnswerButton
+                  key={i}
+                  answer={answer}
+                  selected={selectedAnswer.includes(answer)}
+                  correct={timer === 0 && correctAnswers.includes(answer)}
+                  disabled={timer === 0}
+                  onClick={() => putAnswers(answer)}
+                />
+              ))}
+            </div>
           </div>
 
           {timer === 0 && question && correctAnswers.length > 0 && (
-            <div className="absolute inset-0 bg-gray bg-opacity-40 flex items-center justify-center z-50 animate-fade-in">
-              <div className="bg-white p-6 rounded-lg shadow-lg text-center transform scale-95">
-                <p className="text-green-800 font-[600] mb-2 text-lg">Correct answers</p>
-                <ul>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-slate-800 border border-white/10 rounded-2xl p-8 text-center shadow-2xl max-w-sm w-full mx-4">
+                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-white font-semibold text-lg mb-3">Correct Answer{correctAnswers.length > 1 ? 's' : ''}</p>
+                <ul className="space-y-1">
                   {correctAnswers.map((ans, index) => (
-                    <li key={index}>{ans}</li>
+                    <li key={index} className="text-green-300 text-sm font-medium">{ans}</li>
                   ))}
                 </ul>
               </div>
