@@ -16,6 +16,7 @@ function EditQuestion() {
   const [correctAnswers, setCorrectAnswers] = useState([]);
   const [media, setMedia] = useState(null);
   const [mediaType, setMediaType] = useState(null);
+  const [points, setPoints] = useState(1);
 
   useEffect(() => {
     const stored = getStoredGames();
@@ -30,6 +31,7 @@ function EditQuestion() {
     setQuestionType(type);
     setMedia(q.media || null);
     setMediaType(q.mediaType || null);
+    setPoints(q.points || 1);
     if (type === 'multiple') {
       setCorrectAnswers(q.correctAnswers.map(ans => q.answers.indexOf(ans)).filter(i => i >= 0));
     } else if (type === 'judgement') {
@@ -55,6 +57,7 @@ function EditQuestion() {
       correctAnswers: formattedCorrect,
       media,
       mediaType,
+      points: Number(points),
     };
     const updatedGame = {
       ...game,
@@ -120,15 +123,27 @@ function EditQuestion() {
             onChange={(src, type) => { setMedia(src); setMediaType(type); }}
           />
 
-          <div>
-            <label className="text-slate-300 text-sm font-medium block mb-1.5">Duration (s)</label>
-            <input
-              type="number"
-              min={1}
-              className={inputCls}
-              value={duration}
-              onChange={e => setDuration(e.target.value)}
-            />
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-slate-300 text-sm font-medium block mb-1.5">Duration (s)</label>
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={duration}
+                onChange={e => setDuration(e.target.value)}
+              />
+            </div>
+            <div className="w-28">
+              <label className="text-slate-300 text-sm font-medium block mb-1.5">Points</label>
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={points}
+                onChange={e => setPoints(e.target.value)}
+              />
+            </div>
           </div>
 
           <div>

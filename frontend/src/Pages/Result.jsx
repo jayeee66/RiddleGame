@@ -33,10 +33,13 @@ function Result() {
 
   useEffect(() => {
     const getResults = async () => {
-      const stats = await fetchResults(sessionId);
+      const [stats, pointsList] = await Promise.all([
+        fetchResults(sessionId),
+        fetchPointsList(sessionId),
+      ]);
       setResult(stats);
       setLoading(false);
-      const scores = getScore(stats.results);
+      const scores = getScore(stats.results, pointsList);
       const top5 = scores.sort((a, b) => b.score - a.score).slice(0, 5);
       setTop5(top5);
       const { data, maxAnswerTime } = getChartData(stats.results);
@@ -46,10 +49,27 @@ function Result() {
     getResults();
   }, []);
 
-  //Get score
-  const getScore = (results) => {
+  // Fetch points per question by finding which game owns this session
+  const fetchPointsList = async (sid) => {
+    try {
+      const res = await axios.get('http://localhost:5005/admin/games', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      const games = Array.isArray(res.data.games) ? res.data.games : Object.values(res.data.games || {});
+      const game = games.find(g =>
+        g.active === sid ||
+        (Array.isArray(g.oldSessions) && g.oldSessions.includes(sid))
+      );
+      return game ? game.questions.map(q => q.points || 1) : [];
+    } catch (_) {
+      return [];
+    }
+  };
+
+  //Get score (weighted by points)
+  const getScore = (results, pointsList) => {
     return results.map((player) => {
-      const score = player.answers.filter((a) => a.correct).length;
+      const score = player.answers.reduce((sum, a, i) => sum + (a.correct ? (pointsList[i] || 1) : 0), 0);
       return {
         name: player.name,
         score: score,

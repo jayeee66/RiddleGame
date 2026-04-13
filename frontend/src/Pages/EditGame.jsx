@@ -18,6 +18,7 @@ function EditGame() {
   const [correctAnswers, setCorrectAnswers] = useState([]);
   const [media, setMedia] = useState(null);
   const [mediaType, setMediaType] = useState(null);
+  const [points, setPoints] = useState(1);
 
   useEffect(() => {
     const stored = getStoredGames();
@@ -35,6 +36,7 @@ function EditGame() {
     setCorrectAnswers([]);
     setMedia(null);
     setMediaType(null);
+    setPoints(1);
   };
 
   const addQuestion = async () => {
@@ -58,6 +60,7 @@ function EditGame() {
       correctAnswers: answersObject,
       media,
       mediaType,
+      points: Number(points),
     };
     const updatedGame = { ...game, questions: [...game.questions, question] };
     setGame(updatedGame);
@@ -132,6 +135,7 @@ function EditGame() {
                     {q.questionType === 'single' ? 'Single' : q.questionType === 'multiple' ? 'Multiple' : 'Judgement'}
                   </span>
                   <span className="text-xs text-slate-500">{q.duration}s</span>
+                  <span className="text-xs text-slate-500">{q.points || 1}pt</span>
                 </div>
                 <p className="text-white font-medium hover:text-indigo-300 transition">
                   {q.questionText || 'Untitled question'}
@@ -215,16 +219,28 @@ function EditGame() {
           />
         </div>
 
-        {/* Duration */}
-        <div className="mb-4">
-          <label className="text-slate-300 text-sm font-medium block mb-1.5">Duration (s)</label>
-          <input
-            type="number"
-            min={1}
-            className={inputCls}
-            value={duration}
-            onChange={e => setDuration(e.target.value)}
-          />
+        {/* Duration + Points */}
+        <div className="mb-4 flex gap-3">
+          <div className="flex-1">
+            <label className="text-slate-300 text-sm font-medium block mb-1.5">Duration (s)</label>
+            <input
+              type="number"
+              min={1}
+              className={inputCls}
+              value={duration}
+              onChange={e => setDuration(e.target.value)}
+            />
+          </div>
+          <div className="w-28">
+            <label className="text-slate-300 text-sm font-medium block mb-1.5">Points</label>
+            <input
+              type="number"
+              min={1}
+              className={inputCls}
+              value={points}
+              onChange={e => setPoints(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* Media */}

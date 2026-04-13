@@ -1,9 +1,10 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function PlayerResult() {
   const { playerId } = useParams();
+  const location = useLocation();
   const [playerResult, setPlayerResult] = useState([]);
   const getPlayerResult = async () => {
     const response = await axios.get(`http://localhost:5005/play/${playerId}/results`);
@@ -13,9 +14,11 @@ function PlayerResult() {
   useEffect(() => {
     getPlayerResult();
   }, []);
+  const pointsList = location.state?.points || [];
   const totalQuestions = playerResult.length;
-  const score = playerResult.filter((a) => a.correct).length;
-  const scoreRate = Math.round((score / totalQuestions) * 100);
+  const correctCount = playerResult.filter((a) => a.correct).length;
+  const totalScore = playerResult.reduce((sum, a, i) => sum + (a.correct ? (pointsList[i] || 1) : 0), 0);
+  const scoreRate = Math.round((correctCount / totalQuestions) * 100);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800 p-6">
@@ -23,11 +26,12 @@ function PlayerResult() {
         <h2 className="text-3xl font-bold text-white text-center pt-4">Your Results</h2>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           {[
             { label: 'Questions', value: totalQuestions },
-            { label: 'Correct', value: score },
+            { label: 'Correct', value: correctCount },
             { label: 'Accuracy', value: `${scoreRate || 0}%` },
+            { label: 'Total Score', value: totalScore },
           ].map(({ label, value }) => (
             <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
               <p className="text-2xl font-bold text-white">{value}</p>
@@ -56,7 +60,7 @@ function PlayerResult() {
                     <td className="px-4 py-3 text-white">{ans.answers.join(', ') || '—'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded-lg text-xs font-semibold ${ans.correct ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-400'}`}>
-                        {ans.correct ? '✓' : '✗'}
+                        {ans.correct ? `+${pointsList[i] || 1}` : '0'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-300 text-center">{timeSec}</td>

@@ -38,6 +38,7 @@ function PlayGame() {
   const durationRef = useRef(0);
   const lastIsoRef = useRef(null);
   const answeredRef = useRef(false);
+  const pointsRef = useRef([]);
 
   // 1. Poll until game starts
   useEffect(() => {
@@ -58,6 +59,7 @@ function PlayGame() {
       startTimeRef.current = new Date(q.isoTimeLastQuestionStarted);
       durationRef.current = q.duration;
       answeredRef.current = false;
+      pointsRef.current = [...pointsRef.current, q.points || 1];
       const answers = q.answers.filter(a => a && a.trim() !== '');
       setQuestion({
         questionText: q.questionText,
@@ -73,7 +75,7 @@ function PlayGame() {
       setSelectedAnswer([]);
       setCorrectAnswers([]);
     } catch (error) {
-      if (error.response?.status === 400) navigate(`/player/${playerId}/result`);
+      if (error.response?.status === 400) navigate(`/player/${playerId}/result`, { state: { points: pointsRef.current } });
     }
   };
 
@@ -173,23 +175,6 @@ function PlayGame() {
             </div>
           </div>
 
-          {timer === 0 && question && correctAnswers.length > 0 && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="bg-slate-800 border border-white/10 rounded-2xl p-8 text-center shadow-2xl max-w-sm w-full mx-4">
-                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <p className="text-white font-semibold text-lg mb-3">Correct Answer{correctAnswers.length > 1 ? 's' : ''}</p>
-                <ul className="space-y-1">
-                  {correctAnswers.map((ans, index) => (
-                    <li key={index} className="text-green-300 text-sm font-medium">{ans}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
