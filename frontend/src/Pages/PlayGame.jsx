@@ -26,6 +26,14 @@ function VideoPlayer({ src }) {
   return <video src={src} controls className="w-full max-h-64" />;
 }
 
+const WAITING_MSGS = [
+  'Waiting for the host to start...',
+  'Get ready to answer!',
+  'Sharpen your mind...',
+  'The host is preparing the game...',
+  'Challenge accepted? Stay sharp!',
+];
+
 function PlayGame() {
   const navigate = useNavigate();
   const { playerId } = useParams();
@@ -34,6 +42,13 @@ function PlayGame() {
   const [timer, setTimer] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState([]);
   const [correctAnswers, setCorrectAnswers] = useState([]);
+  const [waitingMsgIdx, setWaitingMsgIdx] = useState(0);
+
+  useEffect(() => {
+    if (started) return;
+    const id = setInterval(() => setWaitingMsgIdx(i => (i + 1) % WAITING_MSGS.length), 3000);
+    return () => clearInterval(id);
+  }, [started]);
   const startTimeRef = useRef(null);
   const durationRef = useRef(0);
   const lastIsoRef = useRef(null);
@@ -132,9 +147,42 @@ function PlayGame() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800 p-4">
       {!started ? (
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin mx-auto mb-4" />
-          <p className="text-slate-300 text-lg font-medium">Waiting for game to start...</p>
+        <div className="text-center flex flex-col items-center gap-6">
+          {/* Pulsing rings + icon */}
+          <div className="relative w-28 h-28 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-indigo-500/20 animate-ping" />
+            <div className="absolute inset-3 rounded-full bg-indigo-400/20 animate-ping" style={{ animationDelay: '0.4s' }} />
+            <div className="relative w-20 h-20 rounded-full bg-indigo-900/60 border-2 border-indigo-400/50 flex items-center justify-center text-4xl select-none">
+              🧠
+            </div>
+          </div>
+
+          {/* Cycling message */}
+          <p
+            key={waitingMsgIdx}
+            className="text-slate-200 text-lg font-medium"
+            style={{ animation: 'fadeSlideIn 0.5s ease' }}
+          >
+            {WAITING_MSGS[waitingMsgIdx]}
+          </p>
+
+          {/* Bouncing dots */}
+          <div className="flex gap-2">
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
+          </div>
+
+          <style>{`
+            @keyframes fadeSlideIn {
+              from { opacity: 0; transform: translateY(6px); }
+              to   { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
         </div>
       ) : !question ? (
         <div className="text-center">
