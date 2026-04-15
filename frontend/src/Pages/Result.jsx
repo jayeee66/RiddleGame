@@ -57,8 +57,8 @@ function Result() {
       });
       const games = Array.isArray(res.data.games) ? res.data.games : Object.values(res.data.games || {});
       const game = games.find(g =>
-        g.active === sid ||
-        (Array.isArray(g.oldSessions) && g.oldSessions.includes(sid))
+        String(g.active) === String(sid) ||
+        (Array.isArray(g.oldSessions) && g.oldSessions.map(String).includes(String(sid)))
       );
       return game ? game.questions.map(q => q.points || 1) : [];
     } catch (_) {

@@ -5,7 +5,7 @@ import axios from 'axios';
 function PlayerResult() {
   const { playerId } = useParams();
   const location = useLocation();
-  const [playerResult, setPlayerResult] = useState([]);
+const [playerResult, setPlayerResult] = useState([]);
   const getPlayerResult = async () => {
     const response = await axios.get(`http://localhost:5005/play/${playerId}/results`);
     setPlayerResult(response.data);
@@ -70,6 +70,7 @@ function PlayerResult() {
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   );

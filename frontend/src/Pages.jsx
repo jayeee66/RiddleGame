@@ -8,6 +8,7 @@ import {
   Navigate,
 } from 'react-router-dom';
 
+import Home from './Pages/Home';
 import Register from './Pages/Register';
 import Login from './Pages/Login';
 import Dashboard from './Pages/Dashboard';
@@ -44,7 +45,6 @@ function Pages() {
     }
     localStorage.removeItem('token');
     setToken(null);
-    navigate('/login');
   };
 
   const playerPaths = ['/session/join', '/play/', '/player/'];
@@ -55,12 +55,12 @@ function Pages() {
     <>
       {showFloatingNav && <NavBar variant="floating" onLogout={logout} />}
       <Routes>
-        <Route path="/" element={<Navigate to={token ? "/dashboard" : "/login"} />} />
+        <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Home />} />
         <Route path="/register" element={<Register successJob={successJob} token={token} />} />
         <Route path="/login" element={<Login successJob={successJob} token={token} />} />
         <Route
           path="/dashboard"
-          element={token ? <Dashboard token={token} logout={logout} /> : <Navigate to="/login" />}
+          element={token ? <Dashboard token={token} logout={logout} /> : <Navigate to="/" />}
         />
         <Route path="/results/:sessionId" element={<Result />} />
         <Route path="/game/:gameId" element={<EditGame token={token} />} />
