@@ -64,9 +64,9 @@ function EditGame() {
     };
     const updatedGame = { ...game, questions: [...game.questions, question] };
     setGame(updatedGame);
-    await updateGame(updatedGame);
     setShowAdd(false);
     resetForm();
+    await updateGame(updatedGame);
   };
 
   const deleteQuestion = async (index) => {
