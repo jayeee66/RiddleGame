@@ -141,7 +141,7 @@ function PlayGame() {
     setSelectedAnswer(updatedAnswers);
     try {
       await axios.put(`http://localhost:5005/play/${playerId}/answer`, { answers: updatedAnswers });
-    } catch (_) {}
+    } catch (_) { /* ignore answer submit errors */ }
   };
 
   return (

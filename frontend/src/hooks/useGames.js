@@ -30,7 +30,7 @@ export function useGames() {
         localStorage.setItem('games', JSON.stringify(normalized));
         return;
       }
-    } catch (_) {}
+    } catch (_) { /* fall through to localStorage fallback */ }
     // fallback to localStorage — strip active/oldSessions since sessions are server-only
     const stored = normalizeGames(JSON.parse(localStorage.getItem('games') || '{}'));
     setGames(Object.values(stored).map(g => ({ ...g, active: null, oldSessions: [] })));

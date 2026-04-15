@@ -14,7 +14,7 @@ export function useSessionStatus(sessionId) {
       });
       setPosition(res.data.results.position);
       setTotalQuestions(res.data.results.questions.length);
-    } catch (_) {}
+    } catch (_) { /* ignore polling errors */ }
   };
 
   useEffect(() => {
