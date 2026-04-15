@@ -1,126 +1,130 @@
-// Path 1: Full admin workflow — single it block so localStorage (auth token)
-// persists across all steps. Cypress clears state between separate it blocks,
-// which would log the user out before each step.
-describe('Path 1: Admin full workflow', () => {
-  // Unique credentials per run to avoid conflicts with existing accounts.
+// Path 2: Player full workflow
+// Setup (register admin, create game, start game) is done via cy.request() so
+// this test only exercises the player-facing UI and is independent of path1.
+describe('Path 2: Player full workflow', () => {
   const timestamp = Date.now();
-  const name = 'Cypress User';
-  const email = `cypress_${timestamp}@example.com`;
-  const password = 'Password123!';
-  const gameName = `Quiz_${timestamp}`;
+  const adminEmail = `admin_player_${timestamp}@example.com`;
+  const adminPassword = 'Password123!';
+  const playerName = `Player_${timestamp}`;
+  const gameId = (timestamp % 900000) + 100000; // 6-digit unique id
+  const API = 'http://localhost:5005';
 
-  it('completes the full admin workflow end-to-end', () => {
+  it('completes the full player workflow end-to-end', () => {
 
-    // ── Step 1: Register ──────────────────────────────────────────────────
-    cy.visit('/register');
+    // ── Step 1: Register admin via API ────────────────────────────────────
+    cy.request('POST', `${API}/admin/auth/register`, {
+      email: adminEmail,
+      password: adminPassword,
+      name: 'Test Admin',
+    })
+      .its('body.token')
+      .as('adminToken');
 
-    cy.get('input[placeholder="Firstname Lastname"]').type(name);
-    cy.get('input[placeholder="you@example.com"]').type(email);
-    // Two password fields — first is Password, last is Confirm Password
-    cy.get('input[type="password"]').first().type(password);
-    cy.get('input[type="password"]').last().type(password);
-
-    cy.contains('button', 'Create Account').click();
-    cy.url().should('include', '/dashboard');
-
-    // ── Step 2: Create a game ─────────────────────────────────────────────
-    cy.contains('button', 'New Game').click({ force: true });
-
-    cy.get('input[placeholder="Game name"]').should('be.visible').type(gameName);
-    cy.contains('button', 'Create').click();
-
-    // Wait for the modal overlay to fully leave the DOM before proceeding
-    cy.wait(1000);
-    cy.get('div.fixed.inset-0').should('not.exist');
-    cy.wait(300);
-    cy.get('input[placeholder="Game name"]').should('not.exist');
-
-    // New game card should appear in the dashboard list
-    cy.contains(gameName).should('be.visible');
-
-    // ── Add a question (required before Start Game) ───────────────────────
-    // Navigate into the game editor via the card title link
-    // force:true bypasses the brief coverage gap after the modal closes
-    cy.contains('h2', gameName).click({ force: true });
-    cy.url().should('match', /\/game\/\d+$/);
-
-    // Open the Add Question modal
-    cy.contains('button', 'Add Question').click({ force: true });
-    cy.contains('New Question').should('be.visible');
-
-    // Judgement type: True/False only — no answer text needed
-    cy.wait(1000);
-    cy.contains('button', 'Judgement').click();
-    cy.get('input[placeholder="Enter your question"]').type('Is Cypress awesome?');
-    cy.contains('button', /^Add$/).click({ force: true });
-
-    // Wait for the modal overlay to fully leave the DOM before proceeding
-    cy.wait(1000);
-    cy.get('div.fixed.inset-0').should('not.exist');
-    cy.get('input[placeholder="Enter your question"]').should('not.exist');
-
-    // Question should now appear in the list
-    cy.contains('Is Cypress awesome?').should('be.visible');
-
-    // Return to dashboard via the floating nav button
-    // force:true bypasses the brief coverage gap after the modal closes
-    cy.contains('← Dashboard').click({ force: true });
-    cy.url().should('include', '/dashboard');
-
-    // ── Step 4: Start Game ────────────────────────────────────────────────
-    // Intercept the mutate API call to capture the session ID for later.
-    cy.intercept('POST', '**/admin/game/*/mutate').as('mutateGame');
-
-    cy.contains('button', 'Start Game').click({ force: true });
-
-    cy.wait('@mutateGame')
-      .its('response.body.data.sessionId')
-      .as('sessionId');
-
-    // Session info and copy link should be visible in the card
-    cy.contains('Session ID').should('be.visible');
-    cy.contains('button', 'Copy Link').should('be.visible');
-
-    // Advance through all questions so that End Game becomes available
-    // (End Game only shows when position === totalQuestions - 1)
-    cy.contains('button', 'Start First Question').click({ force: true });
-    cy.contains('button', 'End Game', { timeout: 8000 }).should('be.visible');
-
-    // ── Step 5: End Game → Not now ────────────────────────────────────────
-    cy.contains('button', 'End Game').click({ force: true });
-
-    // Confirmation modal must appear
-    cy.contains('Would you like to view the results?').should('be.visible');
-
-    // Dismiss without viewing results
-    cy.contains('button', 'Not now').click();
-
-    // Wait for the modal overlay to fully leave the DOM before proceeding
-    cy.wait(1000);
-    cy.get('div.fixed.inset-0').should('not.exist');
-    cy.contains('Would you like to view the results?').should('not.exist');
-
-    // ── Step 6: View results page ─────────────────────────────────────────
-    // Use the session ID captured from the Start Game API response.
-    cy.get('@sessionId').then((id) => {
-      cy.visit(`/results/${id}`);
+    // ── Step 2: Create game with 1 judgement question via API ─────────────
+    // duration: 30 so the timer does not expire during the test
+    cy.get('@adminToken').then((token) => {
+      cy.request({
+        method: 'PUT',
+        url: `${API}/admin/games`,
+        headers: { Authorization: `Bearer ${token}` },
+        body: {
+          games: [{
+            id: gameId,
+            owner: adminEmail,
+            name: `PlayerTest_${timestamp}`,
+            questions: [{
+              id: 1,
+              questionText: 'Is Cypress awesome?',
+              questionType: 'judgement',
+              answers: ['True', 'False'],
+              correctAnswers: ['True'],
+              duration: 30,
+              points: 5,
+              media: null,
+              mediaType: null,
+            }],
+          }],
+        },
+      });
     });
 
-    cy.url().should('match', /\/results\/\d+/);
-    cy.contains('Game Results').should('be.visible');
+    // ── Step 3: Start game via API → capture sessionId ────────────────────
+    cy.get('@adminToken').then((token) => {
+      cy.request({
+        method: 'POST',
+        url: `${API}/admin/game/${gameId}/mutate`,
+        headers: { Authorization: `Bearer ${token}` },
+        body: { mutationType: 'START' },
+      })
+        .its('body.data.sessionId')
+        .as('sessionId');
+    });
 
-    // ── Step 7: Logout → Home ─────────────────────────────────────────────
-    cy.visit('/dashboard');
-    cy.contains('button', 'Logout').click();
-    cy.url().should('eq', `${Cypress.config('baseUrl')}/`);
+    // ── Step 4: Player visits join page ───────────────────────────────────
+    cy.get('@sessionId').then((sessionId) => {
+      cy.visit(`/session/join?sessionId=${sessionId}`);
+    });
 
-    // ── Step 8: Login with the same credentials ───────────────────────────
-    cy.visit('/login');
+    cy.get('input[placeholder="Enter your name"]').type(playerName);
+    cy.contains('button', 'Join Game').click();
 
-    cy.get('input[type="email"]').type(email);
-    cy.get('input[type="password"]').type(password);
-    cy.contains('button', 'Sign In').click();
+    // After joining, player is at /play/:playerId
+    cy.url().should('match', /\/play\/\d+/);
+    cy.url().then((url) => {
+      cy.wrap(url.split('/play/')[1]).as('playerId');
+    });
 
-    cy.url().should('include', '/dashboard');
+    // ── Step 5: Waiting lobby ─────────────────────────────────────────────
+    // Game hasn't advanced yet — player should see the waiting animation
+    cy.contains('Waiting for the host').should('be.visible');
+
+    // ── Step 6: Admin advances to first question via API ──────────────────
+    cy.get('@adminToken').then((token) => {
+      cy.request({
+        method: 'POST',
+        url: `${API}/admin/game/${gameId}/mutate`,
+        headers: { Authorization: `Bearer ${token}` },
+        body: { mutationType: 'ADVANCE' },
+      });
+    });
+
+    // ── Step 7: Question appears (wait for polling to pick up the change) ──
+    cy.contains('Is Cypress awesome?', { timeout: 5000 }).should('be.visible');
+    cy.contains('button', 'True').should('be.visible');
+    cy.contains('button', 'False').should('be.visible');
+    // Timer should be visible
+    cy.contains(/^\d+s$/, { timeout: 3000 }).should('be.visible');
+
+    // ── Step 8: Player selects an answer ──────────────────────────────────
+    cy.contains('button', 'True').click();
+    // Selected answer gets indigo highlight
+    cy.contains('button', 'True').should('have.class', 'bg-indigo-500/30');
+
+    // ── Step 9: Admin ends game via API ───────────────────────────────────
+    cy.get('@adminToken').then((token) => {
+      cy.request({
+        method: 'POST',
+        url: `${API}/admin/game/${gameId}/mutate`,
+        headers: { Authorization: `Bearer ${token}` },
+        body: { mutationType: 'END' },
+      });
+    });
+
+    // ── Step 10: Player is redirected to result page ──────────────────────
+    // PlayGame polls /question every 500ms; after END it gets 400 and navigates
+    cy.url({ timeout: 5000 }).should('match', /\/player\/\d+\/result/);
+
+    // ── Step 11: Verify result page ───────────────────────────────────────
+    cy.contains('Your Results').should('be.visible');
+
+    // Summary cards — 1 question, 1 correct
+    cy.get('p.text-2xl').eq(0).should('have.text', '1'); // Questions
+    cy.get('p.text-2xl').eq(1).should('have.text', '1'); // Correct
+
+    // Result table should show the submitted answer
+    cy.contains('td', 'True').should('be.visible');
+
+    // Score cell should show +5 (correct, 5 points)
+    cy.contains('+5').should('be.visible');
   });
 });
