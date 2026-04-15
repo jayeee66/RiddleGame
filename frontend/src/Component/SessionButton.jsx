@@ -5,7 +5,7 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import EndGameModal from './EndGameModal';
 import { useSessionStatus } from '../hooks/useSessionStatus';
 
-function SessionButton({ gameId, active, onRefresh }) {
+function SessionButton({ gameId, active, onRefresh, questionCount = 0 }) {
   const [localSessionId, setLocalSessionId] = useState(null);
   const sessionId = localSessionId || active || null;
   const [copied, setCopied] = useState(false);
@@ -35,6 +35,10 @@ function SessionButton({ gameId, active, onRefresh }) {
   };
 
   const handleStart = () => {
+    if (questionCount === 0) {
+      setError('Add at least one question before starting the game.');
+      return;
+    }
     mutation("START", (data) => {
       if (data?.sessionId) setLocalSessionId(data.sessionId);
       onRefresh?.();

@@ -17,6 +17,7 @@ function EditQuestion() {
   const [media, setMedia] = useState(null);
   const [mediaType, setMediaType] = useState(null);
   const [points, setPoints] = useState(1);
+  const [validationError, setValidationError] = useState(null);
 
   useEffect(() => {
     const stored = getStoredGames();
@@ -41,7 +42,27 @@ function EditQuestion() {
     }
   }, [gameId, questionId, navigate]);
 
+  const validate = () => {
+    if (!questionText.trim()) return 'Question text is required.';
+    if (!duration || Number(duration) < 1) return 'Duration must be at least 1 second.';
+    if (!points || Number(points) < 1) return 'Points must be at least 1.';
+    if (questionType !== 'judgement') {
+      const nonEmpty = answers.filter(a => a.trim() !== '');
+      if (nonEmpty.length < 2) return 'At least 2 answers are required.';
+      if (questionType === 'single') {
+        if (!answers[idx] || answers[idx].trim() === '') return 'The selected correct answer cannot be empty.';
+      } else {
+        if (correctAnswers.length === 0) return 'Select at least one correct answer.';
+        if (correctAnswers.some(i => !answers[i] || answers[i].trim() === '')) return 'Correct answers cannot be empty.';
+      }
+    }
+    return null;
+  };
+
   const saveQuestion = async () => {
+    const err = validate();
+    if (err) { setValidationError(err); return; }
+    setValidationError(null);
     const formattedCorrect =
       questionType === 'multiple'
         ? correctAnswers.map(i => answers[i])
@@ -237,7 +258,13 @@ function EditQuestion() {
           </div>
         </div>
 
-        <div className="flex gap-3 mt-6">
+        {validationError && (
+          <p className="mt-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            {validationError}
+          </p>
+        )}
+
+        <div className="flex gap-3 mt-4">
           <button
             className="flex-1 py-2.5 rounded-xl bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm font-medium transition"
             onClick={() => navigate(`/game/${gameId}`)}

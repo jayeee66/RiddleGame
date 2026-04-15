@@ -50,10 +50,11 @@ function Pages() {
   const playerPaths = ['/session/join', '/play/', '/player/'];
   const isPlayerPage = playerPaths.some(p => location.pathname.startsWith(p));
   const showFloatingNav = token && !isPlayerPage && location.pathname !== '/dashboard';
+  const isEditPage = location.pathname.startsWith('/game/');
 
   return (
     <>
-      {showFloatingNav && <NavBar variant="floating" onLogout={logout} />}
+      {showFloatingNav && <NavBar variant="floating" onLogout={logout} hideLogout={isEditPage} />}
       <Routes>
         <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Home />} />
         <Route path="/register" element={<Register successJob={successJob} token={token} />} />

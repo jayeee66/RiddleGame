@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-function NavBar({ onLogout, variant = 'full' }) {
+function NavBar({ onLogout, variant = 'full', hideLogout = false }) {
   const navigate = useNavigate();
 
   if (variant === 'floating') {
@@ -12,12 +12,14 @@ function NavBar({ onLogout, variant = 'full' }) {
         >
           ← Dashboard
         </button>
-        <button
-          onClick={onLogout}
-          className="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 text-sm transition"
-        >
-          Logout
-        </button>
+        {!hideLogout && (
+          <button
+            onClick={onLogout}
+            className="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 text-sm transition"
+          >
+            Logout
+          </button>
+        )}
       </div>
     );
   }

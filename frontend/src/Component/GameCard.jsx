@@ -41,7 +41,7 @@ function GameCard({ game, onDelete, onRefresh }) {
       </div>
 
       {/* Session controls */}
-      <SessionButton gameId={game.id} active={game.active} onRefresh={onRefresh} />
+      <SessionButton gameId={game.id} active={game.active} onRefresh={onRefresh} questionCount={game.questions.length} />
     </div>
   );
 }
