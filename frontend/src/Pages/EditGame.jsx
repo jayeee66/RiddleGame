@@ -19,6 +19,7 @@ function EditGame() {
   const [media, setMedia] = useState(null);
   const [mediaType, setMediaType] = useState(null);
   const [points, setPoints] = useState(1);
+  const [validationError, setValidationError] = useState(null);
 
   useEffect(() => {
     const stored = getStoredGames();
@@ -37,9 +38,30 @@ function EditGame() {
     setMedia(null);
     setMediaType(null);
     setPoints(1);
+    setValidationError(null);
+  };
+
+  const validate = () => {
+    if (!questionText.trim()) return 'Question text is required.';
+    if (!duration || Number(duration) < 1) return 'Duration must be at least 1 second.';
+    if (!points || Number(points) < 1) return 'Points must be at least 1.';
+    if (questionType !== 'judgement') {
+      const nonEmpty = answers.filter(a => a.trim() !== '');
+      if (nonEmpty.length < 2) return 'At least 2 answers are required.';
+      if (questionType === 'single') {
+        if (!answers[idx] || answers[idx].trim() === '') return 'The selected correct answer cannot be empty.';
+      } else {
+        if (correctAnswers.length === 0) return 'Select at least one correct answer.';
+        if (correctAnswers.some(i => !answers[i] || answers[i].trim() === '')) return 'Correct answers cannot be empty.';
+      }
+    }
+    return null;
   };
 
   const addQuestion = async () => {
+    const err = validate();
+    if (err) { setValidationError(err); return; }
+    setValidationError(null);
     const newId = game.questions.length > 0
       ? Math.max(...game.questions.map(q => q.id || 0)) + 1
       : 1;
@@ -174,6 +196,7 @@ function EditGame() {
       <Modal
         isOpen={showAdd}
         title="New Question"
+        error={validationError}
         footer={
           <>
             <button

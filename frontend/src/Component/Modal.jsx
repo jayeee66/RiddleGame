@@ -1,4 +1,4 @@
-function Modal({ isOpen, title, children, footer }) {
+function Modal({ isOpen, title, children, footer, error }) {
   if (!isOpen) return null;
 
   return (
@@ -8,6 +8,11 @@ function Modal({ isOpen, title, children, footer }) {
           <h3 className="text-white font-bold text-lg mb-4">{title}</h3>
         )}
         <div>{children}</div>
+        {error && (
+          <p className="mt-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            {error}
+          </p>
+        )}
         {footer && <div className="flex gap-3 mt-4">{footer}</div>}
       </div>
     </div>
