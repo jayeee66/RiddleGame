@@ -1,0 +1,278 @@
+<svg width="100%" viewBox="0 0 760 700" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>BigBrain System Architecture Overview</title>
+  <desc>Frontend, API, and data layer architecture with admin and player flows</desc>
+
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke"
+            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- ── column background tints ─────────────────────────── -->
+  <rect x="0"   y="0" width="298" height="700" fill="#fafaf9"/>
+  <rect x="298" y="0" width="190" height="700" fill="#f8f8f7"/>
+  <rect x="488" y="0" width="272" height="700" fill="#f5f8fc"/>
+
+  <!-- ── column dividers ──────────────────────────────────── -->
+  <line x1="298" y1="18" x2="298" y2="688"
+        stroke="rgba(31,30,29,0.13)" stroke-width="0.75" stroke-dasharray="4 4"/>
+  <line x1="488" y1="18" x2="488" y2="688"
+        stroke="rgba(31,30,29,0.13)" stroke-width="0.75" stroke-dasharray="4 4"/>
+
+  <!-- ── column headers ───────────────────────────────────── -->
+  <text x="149" y="30" text-anchor="middle"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11.5"
+        fill="#5a5955" letter-spacing="0.3">Frontend Layer</text>
+  <text x="393" y="30" text-anchor="middle"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11.5"
+        fill="#5a5955" letter-spacing="0.3">API Layer (JWT Protected)</text>
+  <text x="624" y="30" text-anchor="middle"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11.5"
+        fill="#5a5955" letter-spacing="0.3">Data Layer</text>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       FRONTEND — ADMIN FLOW   col 1: x=16 w=144 center=88
+       ═══════════════════════════════════════════════════════ -->
+
+  <!-- Auth Pages  y=52 -->
+  <rect x="16" y="52" width="144" height="44" rx="8"
+        fill="#eeedfe" stroke="#534ab7" stroke-width="0.75"/>
+  <text x="88" y="70" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#3c3489">Auth Pages</text>
+  <text x="88" y="86" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#534ab7">Login / Register</text>
+
+  <!-- Dashboard  y=142 -->
+  <rect x="16" y="142" width="144" height="44" rx="8"
+        fill="#eeedfe" stroke="#534ab7" stroke-width="0.75"/>
+  <text x="88" y="160" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#3c3489">Dashboard</text>
+  <text x="88" y="176" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#534ab7">Game List Management</text>
+
+  <!-- Game Editor  y=232 -->
+  <rect x="16" y="232" width="144" height="44" rx="8"
+        fill="#eeedfe" stroke="#534ab7" stroke-width="0.75"/>
+  <text x="88" y="250" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#3c3489">Game Editor</text>
+  <text x="88" y="266" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#534ab7">Questions / Options</text>
+
+  <!-- Session Control  y=322 -->
+  <rect x="16" y="322" width="144" height="44" rx="8"
+        fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.75"/>
+  <text x="88" y="340" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#085041">Session Control</text>
+  <text x="88" y="356" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">Mutate · Poll Status · Share ID</text>
+
+  <!-- Results Page  y=412 -->
+  <rect x="16" y="412" width="144" height="44" rx="8"
+        fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.75"/>
+  <text x="88" y="430" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#085041">Results Page</text>
+  <text x="88" y="446" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">Charts / Leaderboard</text>
+
+  <!-- admin vertical arrows -->
+  <line x1="88" y1="96"  x2="88" y2="142" stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="88" y1="186" x2="88" y2="232" stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="88" y1="276" x2="88" y2="322" stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="88" y1="366" x2="88" y2="412" stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       FRONTEND — PLAYER FLOW   col 2: x=168 w=118 center=227
+       Shifted 58px below Results so Results→API arrow (y=434)
+       clears Player Join (starts y=502) with 68px gap.
+       ═══════════════════════════════════════════════════════ -->
+
+  <!-- Player Join  y=502 -->
+  <rect x="168" y="502" width="118" height="44" rx="8"
+        fill="#faece7" stroke="#993c1d" stroke-width="0.75"/>
+  <text x="227" y="520" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#712b13">Player Join</text>
+  <text x="227" y="536" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#993c1d">Enter Session ID</text>
+
+  <!-- Player Game  y=570 -->
+  <rect x="168" y="570" width="118" height="44" rx="8"
+        fill="#faece7" stroke="#993c1d" stroke-width="0.75"/>
+  <text x="227" y="588" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#712b13">Player Game</text>
+  <text x="227" y="604" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#993c1d">Timer / Answer</text>
+
+  <!-- Player Result  y=638  ← NEW: was missing from original -->
+  <rect x="168" y="638" width="118" height="44" rx="8"
+        fill="#faece7" stroke="#993c1d" stroke-width="0.75"/>
+  <text x="227" y="656" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#712b13">Player Result</text>
+  <text x="227" y="672" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#993c1d">Final Score</text>
+
+  <!-- player vertical arrows -->
+  <line x1="227" y1="546" x2="227" y2="570" stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="227" y1="614" x2="227" y2="638" stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       API LAYER   x=312 w=164 center=394
+       ═══════════════════════════════════════════════════════ -->
+
+  <!-- Auth API  y=52 -->
+  <rect x="312" y="52" width="164" height="44" rx="8"
+        fill="#f1efe8" stroke="#7a7970" stroke-width="0.75"/>
+  <text x="394" y="70" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="12.5" font-weight="500" fill="#3a3a37">POST /admin/auth/*</text>
+  <text x="394" y="86" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#6a6a65">login · register · logout</text>
+
+  <!-- Games API  y=142 -->
+  <rect x="312" y="142" width="164" height="44" rx="8"
+        fill="#f1efe8" stroke="#7a7970" stroke-width="0.75"/>
+  <text x="394" y="160" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="12.5" font-weight="500" fill="#3a3a37">GET/PUT /admin/games</text>
+  <text x="394" y="176" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#6a6a65">Read / Bulk Update Games</text>
+
+  <!-- Mutate API  y=322 -->
+  <rect x="312" y="322" width="164" height="44" rx="8"
+        fill="#f1efe8" stroke="#7a7970" stroke-width="0.75"/>
+  <text x="394" y="340" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="12.5" font-weight="500" fill="#3a3a37">POST /game/:id/mutate</text>
+  <text x="394" y="356" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#6a6a65">START · ADVANCE · END</text>
+
+  <!-- Session Results API  y=412  ← FIXED: was incorrectly /status -->
+  <rect x="312" y="412" width="164" height="44" rx="8"
+        fill="#f1efe8" stroke="#7a7970" stroke-width="0.75"/>
+  <text x="394" y="430" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="12.5" font-weight="500" fill="#3a3a37">GET /session/:id/results</text>
+  <text x="394" y="446" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#6a6a65">final scores · per-question</text>
+
+  <!-- Player APIs  y=502 h=182  ← spans all 3 player rows -->
+  <rect x="312" y="502" width="164" height="182" rx="8"
+        fill="#f1efe8" stroke="#7a7970" stroke-width="0.75"/>
+  <text x="394" y="546" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="12.5" font-weight="500" fill="#3a3a37">POST/GET /play/*</text>
+  <text x="394" y="564" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#6a6a65">join · status · question</text>
+  <text x="394" y="580" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#6a6a65">answer · results</text>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       HORIZONTAL ARROWS — Frontend → API
+       ═══════════════════════════════════════════════════════ -->
+
+  <!-- Auth Pages → Auth API -->
+  <line x1="162" y1="74" x2="310" y2="74"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Dashboard → Games API -->
+  <line x1="162" y1="164" x2="310" y2="164"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Game Editor → Games API  ← NEW diagonal arrow going up-right -->
+  <line x1="160" y1="254" x2="310" y2="168"
+        stroke="#9b9a95" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#arr)"/>
+
+  <!-- Session Control → Mutate API -->
+  <line x1="162" y1="344" x2="310" y2="344"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Results Page → Session Results API  ← FIXED (was pointing to /status) -->
+  <!-- Arrow at y=434 clears Player Join which starts at y=502 (68px gap) ✓ -->
+  <line x1="162" y1="434" x2="310" y2="434"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Player Join → Player APIs  ← NEW -->
+  <line x1="288" y1="524" x2="310" y2="524"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Player Game → Player APIs -->
+  <line x1="288" y1="592" x2="310" y2="592"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Player Result → Player APIs  ← NEW -->
+  <line x1="288" y1="660" x2="310" y2="660"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       DATA LAYER   x=502 w=230 center=617
+       ═══════════════════════════════════════════════════════ -->
+
+  <!-- Games Blob  y=52 h=214 (spans rows 1–3) -->
+  <rect x="502" y="52" width="230" height="214" rx="12"
+        fill="#e6f1fb" stroke="#185fa5" stroke-width="0.75"/>
+  <text x="617" y="80" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#0c447c">Games Blob</text>
+  <text x="617" y="100" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#185fa5">owner / name / thumbnail</text>
+  <text x="617" y="118" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#185fa5">active / oldSessions</text>
+  <text x="617" y="143" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#185fa5">questions[]</text>
+  <text x="617" y="161" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#185fa5">duration / correctAnswers</text>
+  <text x="617" y="179" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#185fa5">type / text / points</text>
+  <text x="617" y="197" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#185fa5">answers[] / media</text>
+
+  <!-- Session State  y=282 h=110 -->
+  <rect x="502" y="282" width="230" height="110" rx="12"
+        fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.75"/>
+  <text x="617" y="308" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#085041">Session State</text>
+  <text x="617" y="328" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">position / players</text>
+  <text x="617" y="346" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">isoTimeLastQuestionStarted</text>
+  <text x="617" y="364" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">answerAvailable</text>
+
+  <!-- Player Records  y=408 h=268 (spans rows 5–8) -->
+  <rect x="502" y="408" width="230" height="268" rx="12"
+        fill="#faece7" stroke="#993c1d" stroke-width="0.75"/>
+  <text x="617" y="460" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="13" font-weight="500" fill="#712b13">Player Records</text>
+  <text x="617" y="480" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#993c1d">name / answers[]</text>
+  <text x="617" y="498" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#993c1d">correct / answeredAt</text>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       DIAGONAL ARROWS — API → Data
+       Each line departs the right edge of an API box and
+       arrives at the left edge of the correct data block.
+       ═══════════════════════════════════════════════════════ -->
+
+  <!-- Auth API → Games Blob -->
+  <line x1="478" y1="74" x2="500" y2="96"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Games API → Games Blob -->
+  <line x1="478" y1="164" x2="500" y2="150"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Mutate API → Session State -->
+  <line x1="478" y1="344" x2="500" y2="322"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Session Results API → Player Records  ← FIXED (was pointing to Session State) -->
+  <line x1="478" y1="434" x2="500" y2="452"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <!-- Player APIs → Player Records -->
+  <line x1="478" y1="593" x2="500" y2="560"
+        stroke="#9b9a95" stroke-width="1.4" marker-end="url(#arr)"/>
+
+</svg>
