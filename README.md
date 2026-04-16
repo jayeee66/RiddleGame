@@ -30,7 +30,7 @@ A full-stack real-time quiz platform inspired by Kahoot. Admins create and host 
 ```bash
 cd backend
 npm install
-npm run dev   # runs on http://localhost:5005
+npm run start   # runs on http://localhost:5005
 ```
 
 ### Frontend
@@ -38,5 +38,5 @@ npm run dev   # runs on http://localhost:5005
 ```bash
 cd frontend
 npm install
-npm run dev   # runs on http://localhost:5173
+npm run dev   # runs on http://localhost:3000
 ```
