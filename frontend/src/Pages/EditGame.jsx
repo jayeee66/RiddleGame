@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGames } from '../hooks/useGames';
+import { useQuestionForm } from '../hooks/useQuestionForm';
 import Modal from '../Component/Modal';
-import MediaInput from '../Component/MediaInput';
+import QuestionFormFields from '../Component/QuestionFormFields';
 
 function EditGame() {
   const { gameId } = useParams();
@@ -10,16 +11,7 @@ function EditGame() {
   const { getStoredGames, updateGame } = useGames();
   const [game, setGame] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [questionText, setQuestionText] = useState('');
-  const [duration, setDuration] = useState(10);
-  const [answers, setAnswers] = useState(['', '']);
-  const [questionType, setQuestionType] = useState('single');
-  const [idx, setIdx] = useState(0);
-  const [correctAnswers, setCorrectAnswers] = useState([]);
-  const [media, setMedia] = useState(null);
-  const [mediaType, setMediaType] = useState(null);
-  const [points, setPoints] = useState(1);
-  const [validationError, setValidationError] = useState(null);
+  const form = useQuestionForm();
 
   useEffect(() => {
     const stored = getStoredGames();
@@ -28,66 +20,36 @@ function EditGame() {
     setGame(editable);
   }, [gameId, navigate]);
 
-  const resetForm = () => {
-    setQuestionText('');
-    setDuration(10);
-    setAnswers(['', '']);
-    setQuestionType('single');
-    setIdx(0);
-    setCorrectAnswers([]);
-    setMedia(null);
-    setMediaType(null);
-    setPoints(1);
-    setValidationError(null);
-  };
-
-  const validate = () => {
-    if (!questionText.trim()) return 'Question text is required.';
-    if (!duration || Number(duration) < 1) return 'Duration must be at least 1 second.';
-    if (!points || Number(points) < 1) return 'Points must be at least 1.';
-    if (questionType !== 'judgement') {
-      const nonEmpty = answers.filter(a => a.trim() !== '');
-      if (nonEmpty.length < 2) return 'At least 2 answers are required.';
-      if (questionType === 'single') {
-        if (!answers[idx] || answers[idx].trim() === '') return 'The selected correct answer cannot be empty.';
-      } else {
-        if (correctAnswers.length === 0) return 'Select at least one correct answer.';
-        if (correctAnswers.some(i => !answers[i] || answers[i].trim() === '')) return 'Correct answers cannot be empty.';
-      }
-    }
-    return null;
-  };
-
   const addQuestion = async () => {
-    const err = validate();
-    if (err) { setValidationError(err); return; }
-    setValidationError(null);
+    const err = form.validate();
+    if (err) { form.setValidationError(err); return; }
+    form.setValidationError(null);
     const newId = game.questions.length > 0
       ? Math.max(...game.questions.map(q => q.id || 0)) + 1
       : 1;
     let answersObject;
-    if (questionType === 'multiple') {
-      answersObject = correctAnswers.map(i => answers[i]);
-    } else if (questionType === 'judgement') {
-      answersObject = [idx === 0 ? 'True' : 'False'];
+    if (form.questionType === 'multiple') {
+      answersObject = form.correctAnswers.map(i => form.answers[i]);
+    } else if (form.questionType === 'judgement') {
+      answersObject = [form.idx === 0 ? 'True' : 'False'];
     } else {
-      answersObject = [answers[idx]];
+      answersObject = [form.answers[form.idx]];
     }
     const question = {
       id: newId,
-      questionText,
-      duration: Number(duration),
-      answers: questionType === 'judgement' ? ['True', 'False'] : [...answers],
-      questionType,
+      questionText: form.questionText,
+      duration: Number(form.duration),
+      answers: form.questionType === 'judgement' ? ['True', 'False'] : [...form.answers],
+      questionType: form.questionType,
       correctAnswers: answersObject,
-      media,
-      mediaType,
-      points: Number(points),
+      media: form.media,
+      mediaType: form.mediaType,
+      points: Number(form.points),
     };
     const updatedGame = { ...game, questions: [...game.questions, question] };
     setGame(updatedGame);
     setShowAdd(false);
-    resetForm();
+    form.reset();
     await updateGame(updatedGame);
   };
 
@@ -96,8 +58,6 @@ function EditGame() {
     setGame(updatedGame);
     await updateGame(updatedGame);
   };
-
-  const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition';
 
   if (!game) return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-800 flex items-center justify-center">
@@ -196,12 +156,12 @@ function EditGame() {
       <Modal
         isOpen={showAdd}
         title="New Question"
-        error={validationError}
+        error={form.validationError}
         footer={
           <>
             <button
               className="flex-1 py-2 rounded-xl bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm transition"
-              onClick={() => { setShowAdd(false); resetForm(); }}
+              onClick={() => { setShowAdd(false); form.reset(); }}
             >
               Cancel
             </button>
@@ -214,149 +174,7 @@ function EditGame() {
           </>
         }
       >
-        {/* Question type */}
-        <div className="mb-4">
-          <p className="text-slate-300 text-sm font-medium mb-2">Type</p>
-          <div className="flex gap-2">
-            {['single', 'multiple', 'judgement'].map(type => (
-              <button
-                key={type}
-                onClick={() => setQuestionType(type)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition ${questionType === type ? 'bg-indigo-500 border-indigo-500 text-white' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}
-              >
-                {type === 'single' ? 'Single' : type === 'multiple' ? 'Multiple' : 'Judgement'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Question text */}
-        <div className="mb-3">
-          <label className="text-slate-300 text-sm font-medium block mb-1.5">Question</label>
-          <input
-            type="text"
-            className={inputCls}
-            placeholder="Enter your question"
-            value={questionText}
-            onChange={e => setQuestionText(e.target.value)}
-          />
-        </div>
-
-        {/* Duration + Points */}
-        <div className="mb-4 flex gap-3">
-          <div className="flex-1">
-            <label className="text-slate-300 text-sm font-medium block mb-1.5">Duration (s)</label>
-            <input
-              type="number"
-              min={1}
-              className={inputCls}
-              value={duration}
-              onChange={e => setDuration(e.target.value)}
-            />
-          </div>
-          <div className="w-28">
-            <label className="text-slate-300 text-sm font-medium block mb-1.5">Points</label>
-            <input
-              type="number"
-              min={1}
-              className={inputCls}
-              value={points}
-              onChange={e => setPoints(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Media */}
-        <div className="mb-4">
-          <MediaInput
-            media={media}
-            mediaType={mediaType}
-            onChange={(src, type) => { setMedia(src); setMediaType(type); }}
-          />
-        </div>
-
-        {/* Answers */}
-        <div className="mb-2">
-          <p className="text-slate-300 text-sm font-medium mb-2">
-            {questionType === 'multiple' ? 'Answers (select all correct)' : questionType === 'judgement' ? 'Correct answer' : 'Answers (select correct)'}
-          </p>
-
-          {questionType === 'judgement' ? (
-            <div className="flex gap-2">
-              {['True', 'False'].map((label, i) => (
-                <button
-                  key={i}
-                  onClick={() => setIdx(i)}
-                  className={`flex-1 py-2 rounded-xl border text-sm font-medium transition ${idx === i ? 'bg-green-500/20 border-green-500/50 text-green-300' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {answers.map((ans, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      if (questionType === 'single') {
-                        setIdx(i);
-                      } else {
-                        setCorrectAnswers(prev =>
-                          prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]
-                        );
-                      }
-                    }}
-                    className={`w-5 h-5 rounded shrink-0 border-2 flex items-center justify-center transition ${
-                      (questionType === 'single' ? idx === i : correctAnswers.includes(i))
-                        ? 'bg-indigo-500 border-indigo-500'
-                        : 'border-slate-600 hover:border-slate-400'
-                    }`}
-                  >
-                    {(questionType === 'single' ? idx === i : correctAnswers.includes(i)) && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-                  <input
-                    type="text"
-                    placeholder={`Answer ${i + 1}`}
-                    value={ans}
-                    onChange={e => {
-                      const copy = [...answers];
-                      copy[i] = e.target.value;
-                      setAnswers(copy);
-                    }}
-                    className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition"
-                  />
-                  {answers.length > 2 && (
-                    <button
-                      onClick={() => {
-                        setAnswers(prev => prev.filter((_, j) => j !== i));
-                        if (questionType === 'single' && idx >= i) setIdx(Math.max(0, idx - 1));
-                        if (questionType === 'multiple') setCorrectAnswers(prev => prev.filter(x => x !== i).map(x => x > i ? x - 1 : x));
-                      }}
-                      className="text-slate-600 hover:text-red-400 transition"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              ))}
-              {answers.length < 6 && (
-                <button
-                  onClick={() => setAnswers(prev => [...prev, ''])}
-                  className="w-full py-2 rounded-xl border border-dashed border-white/20 text-slate-500 hover:text-slate-300 hover:border-white/40 text-sm transition"
-                >
-                  + Add answer
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        <QuestionFormFields form={form} />
       </Modal>
     </div>
   );
