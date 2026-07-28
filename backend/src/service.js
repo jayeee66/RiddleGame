@@ -1,11 +1,22 @@
 import AsyncLock from "async-lock";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 import fs from "fs";
 import jwt from "jsonwebtoken";
 import { AccessError, InputError } from "./error.js";
 
 const lock = new AsyncLock();
 
-const JWT_SECRET = "llamallamaduck";
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString("hex");
+if (!process.env.JWT_SECRET) {
+  console.warn(
+    "WARNING: JWT_SECRET env var not set. Using a randomly generated secret for this process " +
+    "(tokens will not survive a restart and cannot be forged from source code, but you should " +
+    "set JWT_SECRET explicitly before deploying)."
+  );
+}
+const JWT_EXPIRY = "12h";
+const SALT_ROUNDS = 10;
 const DATABASE_FILE = "./database.json";
 
 /***************************************************************
@@ -71,17 +82,17 @@ const newPlayerId = (_) =>
 
 export const userLock = (callback) =>
   new Promise((resolve, reject) => {
-    lock.acquire("userAuthLock", callback(resolve, reject));
+    lock.acquire("userAuthLock", () => callback(resolve, reject));
   });
 
 export const gameLock = (callback) =>
   new Promise((resolve, reject) => {
-    lock.acquire("gameMutateLock", callback(resolve, reject));
+    lock.acquire("gameMutateLock", () => callback(resolve, reject));
   });
 
 export const sessionLock = (callback) =>
   new Promise((resolve, reject) => {
-    lock.acquire("sessionMutateLock", callback(resolve, reject));
+    lock.acquire("sessionMutateLock", () => callback(resolve, reject));
   });
 
 const copy = (x) => JSON.parse(JSON.stringify(x));
@@ -105,7 +116,7 @@ export const getEmailFromAuthorization = (authorization) => {
   try {
     const token = authorization.replace("Bearer ", "");
     const { email } = jwt.verify(token, JWT_SECRET);
-    if (!(email in admins)) {
+    if (!(email in admins) || !admins[email].sessionActive) {
       throw new AccessError("Invalid Token");
     }
     return email;
@@ -115,14 +126,16 @@ export const getEmailFromAuthorization = (authorization) => {
 };
 
 export const login = (email, password) =>
-  userLock((resolve, reject) => {
-    if (email in admins) {
-      if (admins[email].password === password) {
-        admins[email].sessionActive = true;
-        resolve(jwt.sign({ email }, JWT_SECRET, { algorithm: "HS256" }));
-      }
+  userLock(async (resolve, reject) => {
+    if (!(email in admins)) {
+      return reject(new InputError("Invalid username or password"));
     }
-    reject(new InputError("Invalid username or password"));
+    const passwordMatches = await bcrypt.compare(password, admins[email].password);
+    if (!passwordMatches) {
+      return reject(new InputError("Invalid username or password"));
+    }
+    admins[email].sessionActive = true;
+    resolve(jwt.sign({ email }, JWT_SECRET, { algorithm: "HS256", expiresIn: JWT_EXPIRY }));
   });
 
 export const logout = (email) =>
@@ -132,16 +145,17 @@ export const logout = (email) =>
   });
 
 export const register = (email, password, name) =>
-  userLock((resolve, reject) => {
+  userLock(async (resolve, reject) => {
     if (email in admins) {
       return reject(new InputError("Email address already registered"));
     }
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     admins[email] = {
       name,
-      password,
+      password: hashedPassword,
       sessionActive: true,
     };
-    const token = jwt.sign({ email }, JWT_SECRET, { algorithm: "HS256" });
+    const token = jwt.sign({ email }, JWT_SECRET, { algorithm: "HS256", expiresIn: JWT_EXPIRY });
     resolve(token);
   });
 
